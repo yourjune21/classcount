@@ -9,15 +9,21 @@
  * /api/* 요청만 처리하고, 나머지는 정적 파일(index.html)을 그대로 돌려줍니다.
  */
 
-const SERVER_VERSION = '1.11.3';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
+const SERVER_VERSION = '1.12.0';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
 const SCHOOL_PREFIX = 'school:';
 const SHARE_PREFIX = 'share:';
 const SHARE_RE = /^[A-Za-z0-9]{6}$/;
 const INDEX_KEY = 'index:schools';
 const ARCHIVE_PREFIX = 'archive:';       // archive:<학교코드>:<학년도> → 지난 학년도 자료(조회 전용)
 const archiveKey = (code, year) => ARCHIVE_PREFIX + code + ':' + year;
-const SETTINGS_KEY = 'settings:app';     // 최고관리자 설정 { allowCreate }
-async function getSettings(env) { const v = await env.SCHOOLS.get(SETTINGS_KEY, 'json'); return { allowCreate: true, ...(v || {}) }; }       // [{code, name}] — 학교 찾기·학교명 로그인용 색인
+const SETTINGS_KEY = 'settings:app';     // 최고관리자 설정 { allowCreate, holidays:[{date,name}], holidayOff:[date] }
+async function getSettings(env) { const v = await env.SCHOOLS.get(SETTINGS_KEY, 'json'); return { allowCreate: true, holidays: [], holidayOff: [], ...(v || {}) }; }
+const BACKUP_PREFIX = 'backup:';         // backup:<학교코드>:<id> → 그날 처음 고치기 전 자료 (최근 BACKUP_KEEP개)
+const backupKey = (code, id) => BACKUP_PREFIX + code + ':' + id;
+const BACKUP_KEEP = 10;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const kstDay = (t = Date.now()) => new Date(t + 9 * 3600000).toISOString().slice(0, 10);
+const kstStamp = (t = Date.now()) => new Date(t + 9 * 3600000).toISOString().slice(0, 16).replace(/[-:T]/g, '');
 const normName = (s) => String(s || '').replace(/\s+/g, '').toLowerCase();
 const CODE_RE = /^[A-Za-z0-9_-]{3,20}$/;
 const PBKDF2_ITER = 100000;              // Workers의 PBKDF2 최대 반복 횟수
@@ -145,9 +151,22 @@ async function indexSet(env, code, name) {
   await env.SCHOOLS.put(INDEX_KEY, JSON.stringify(idx));
 }
 
+/* ---- 자동 백업: 그날 처음 저장할 때 바뀌기 전 자료를 보관 ---- */
+async function addBackup(env, s, oldJson, label) {
+  if (!oldJson) return;
+  const now = Date.now(), list = s.backups || [];
+  const id = label === 'auto' ? kstDay(now) : kstDay(now) + '-' + kstStamp(now).slice(8) + label[0];
+  if (list.some((b) => b.id === id)) return;
+  let deptCount = 0; try { deptCount = (JSON.parse(oldJson).depts || []).length; } catch (e) {}
+  await env.SCHOOLS.put(backupKey(s.code, id), oldJson);
+  list.unshift({ id, at: s.updatedAt || now, savedAt: now, label, deptCount, size: oldJson.length });
+  while (list.length > BACKUP_KEEP) { const old = list.pop(); await env.SCHOOLS.delete(backupKey(s.code, old.id)); }
+  s.backups = list;
+}
+
 async function failCheck(env, key) { return Number((await env.SCHOOLS.get('fail:' + key)) || 0) >= FAIL_LIMIT; }
 async function failAdd(env, key) { const n = Number((await env.SCHOOLS.get('fail:' + key)) || 0) + 1; await env.SCHOOLS.put('fail:' + key, String(n), { expirationTtl: FAIL_TTL }); }
-async function failClear(env, key) { await env.SCHOOLS.delete('fail:' + key); }
+async function failClear(env, key) { if ((await env.SCHOOLS.get('fail:' + key)) != null) await env.SCHOOLS.delete('fail:' + key); }   // 기록이 있을 때만 지움 (KV 쓰기 절약)
 
 async function auth(request, env, kind) {
   const h = request.headers.get('authorization') || '';
@@ -171,7 +190,7 @@ async function handleApi(request, env, url) {
   const path = url.pathname.replace(/^\/api/, '').replace(/\/+$/, '') || '/';
   const m = request.method;
 
-  if (path === '/health') { const st = await getSettings(env); return json({ ok: true, admin: !!env.ADMIN_PASSWORD, version: SERVER_VERSION, allowCreate: st.allowCreate }); }
+  if (path === '/health') { const st = await getSettings(env); return json({ ok: true, admin: !!env.ADMIN_PASSWORD, version: SERVER_VERSION, allowCreate: st.allowCreate, holidays: st.holidays, holidayOff: st.holidayOff }); }
 
   // ---- 강사용 조회 (로그인 없이 6자리 코드로) ----
   const tm = path.match(/^\/t\/([A-Za-z0-9]{6})$/);
@@ -235,11 +254,22 @@ async function handleApi(request, env, url) {
     if (m === 'GET') return json({ school: publicSchool(s) });
     if (m === 'PUT') {
       const b = await readBody(request);
-      applyMeta(s, b); s.updatedAt = Date.now();
+      // 동시 수정 감지: 마지막으로 받은 버전(baseUpdatedAt) 이후 다른 곳에서 저장했으면 거절
+      if (b.baseUpdatedAt != null && !b.force && s.updatedAt && Number(b.baseUpdatedAt) !== s.updatedAt) {
+        return json({ error: '다른 기기에서 먼저 수정한 내용이 있습니다.', conflict: true, updatedAt: s.updatedAt }, 409);
+      }
+      const oldJson = s.json, oldName = s.name;
+      const before = JSON.stringify(metaOf(s));
+      applyMeta(s, b);
+      if (s.json === oldJson && JSON.stringify(metaOf(s)) === before && !b.backupNow) return json({ ok: true, updatedAt: s.updatedAt, unchanged: true });   // 바뀐 것이 없으면 쓰지 않음
+      if (b.backupNow) await addBackup(env, s, oldJson, b.backupNow === 'restore' ? 'restore' : 'manual');
+      else if (s.json !== oldJson && !(s.backups || []).some((x) => x.id === kstDay())) await addBackup(env, s, oldJson, 'auto');
+      s.updatedAt = Date.now();
       await syncShares(env, s);
       await putSchool(env, s);
-      await indexSet(env, s.code, s.name);
-      return json({ ok: true, updatedAt: s.updatedAt });
+      let dupName = false;
+      if (s.name !== oldName) { dupName = (await getIndex(env)).some((x) => x.code !== s.code && normName(x.name) === normName(s.name)); await indexSet(env, s.code, s.name); }
+      return json({ ok: true, updatedAt: s.updatedAt, dupName });
     }
   }
   // ---- 학년도 전환: 현재 자료를 보관하고 새 학년도 자료로 교체 ----
@@ -256,7 +286,7 @@ async function handleApi(request, env, url) {
     await syncShares(env, s);
     await putSchool(env, s);
     await indexSet(env, s.code, s.name);
-    return json({ ok: true, years: s.archiveYears.slice().sort() });
+    return json({ ok: true, years: s.archiveYears.slice().sort(), updatedAt: s.updatedAt });
   }
   const am = path.match(/^\/school\/archive\/(\d{4})$/);
   if (am && m === 'GET') {
@@ -265,6 +295,22 @@ async function handleApi(request, env, url) {
     const j = await env.SCHOOLS.get(archiveKey(s.code, am[1]));
     if (j == null) return err(404, '보관된 학년도 자료가 없습니다.');
     return json({ year: am[1], json: j });
+  }
+
+  // ---- 자동 백업 목록·내용 ----
+  if (path === '/school/backups' && m === 'GET') {
+    const s = await schoolAuth(request, env);
+    if (!s) return err(401, '다시 로그인하세요.');
+    return json({ backups: s.backups || [] });
+  }
+  const bm = path.match(/^\/school\/backups\/([0-9A-Za-z-]{10,24})$/);
+  if (bm && m === 'GET') {
+    const s = await schoolAuth(request, env);
+    if (!s) return err(401, '다시 로그인하세요.');
+    if (!(s.backups || []).some((x) => x.id === bm[1])) return err(404, '백업을 찾을 수 없습니다.');
+    const j = await env.SCHOOLS.get(backupKey(s.code, bm[1]));
+    if (j == null) return err(404, '백업을 찾을 수 없습니다.');
+    return json({ id: bm[1], json: j });
   }
 
   if (path === '/school/password' && m === 'POST') {
@@ -292,13 +338,27 @@ async function handleApi(request, env, url) {
     if (path === '/admin/settings' && m === 'PUT') {
       const b = await readBody(request), st = await getSettings(env);
       if (typeof b.allowCreate === 'boolean') st.allowCreate = b.allowCreate;
+      if (Array.isArray(b.holidays)) st.holidays = b.holidays.filter((h) => h && DATE_RE.test(h.date)).slice(0, 300).map((h) => ({ date: h.date, name: String(h.name || '공휴일').slice(0, 40) })).sort((x, y) => (x.date < y.date ? -1 : 1));
+      if (Array.isArray(b.holidayOff)) st.holidayOff = b.holidayOff.filter((d) => DATE_RE.test(d)).slice(0, 300).sort();
       await env.SCHOOLS.put(SETTINGS_KEY, JSON.stringify(st));
       return json(st);
     }
     if (path === '/admin/schools' && m === 'GET') {
       const out = await listSchools(env);
-      await env.SCHOOLS.put(INDEX_KEY, JSON.stringify(out.map((x) => ({ code: x.id, name: x.name || '' }))));   // 색인 새로 고침
+      const fresh = JSON.stringify(out.map((x) => ({ code: x.id, name: x.name || '' })));
+      if ((await env.SCHOOLS.get(INDEX_KEY)) !== fresh) await env.SCHOOLS.put(INDEX_KEY, fresh);   // 색인이 달라졌을 때만 새로 고침
       return json({ schools: out });
+    }
+    // ---- 전체 학교 백업 (비밀번호 정보 제외) ----
+    if (path === '/admin/export' && m === 'GET') {
+      const list = await listSchools(env), schools = [];
+      for (const x of list) {
+        const s = await getSchool(env, x.id); if (!s) continue;
+        const archives = {};
+        for (const y of s.archiveYears || []) { const j = await env.SCHOOLS.get(archiveKey(s.code, y)); if (j != null) archives[y] = j; }
+        schools.push({ code: s.code, name: s.name, json: s.json, archives, createdAt: s.createdAt, updatedAt: s.updatedAt });
+      }
+      return json({ app: 'ClassCount', version: SERVER_VERSION, exportedAt: new Date().toISOString(), settings: await getSettings(env), schools });
     }
     const aa = path.match(/^\/admin\/schools\/([A-Za-z0-9_-]{3,20})\/archive\/(\d{4})$/);
     if (aa && m === 'GET') {
@@ -314,6 +374,7 @@ async function handleApi(request, env, url) {
       if (!mm[2] && m === 'DELETE') {
         for (const c of s.shares || []) await env.SCHOOLS.delete(SHARE_PREFIX + c);
         for (const y of s.archiveYears || []) await env.SCHOOLS.delete(archiveKey(s.code, y));
+        for (const bk of s.backups || []) await env.SCHOOLS.delete(backupKey(s.code, bk.id));
         await env.SCHOOLS.delete(SCHOOL_PREFIX + s.code); await indexSet(env, s.code, null); return json({ ok: true });
       }
       if (mm[2] && m === 'POST') {

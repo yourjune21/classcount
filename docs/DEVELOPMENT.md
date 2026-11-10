@@ -50,17 +50,20 @@ Node 18 이상이면 되고, 설치할 패키지는 없습니다(`dev`·`deploy`
 ## 서버 API (`worker/_worker.js`)
 | 메서드·경로 | 인증 | 설명 |
 |---|---|---|
-| `GET /api/health` | – | 상태·서버 버전·관리자 설정 여부·새 학교 생성 허용 여부 |
+| `GET /api/health` | – | 상태·서버 버전·관리자 설정 여부·새 학교 생성 허용 여부·관리자 공휴일 설정(`holidays`, `holidayOff`) |
 | `GET /api/schools?q=` | – | 학교 찾기(최대 30곳) |
 | `POST /api/schools` | – | 학교 생성 (`allowCreate` 가 꺼져 있으면 403) |
 | `POST /api/login` | – | 학교코드 또는 학교명 + 비밀번호 → 학교 토큰 |
-| `GET/PUT /api/school` | 학교 | 현재 학년도 자료 읽기/저장 |
+| `GET/PUT /api/school` | 학교 | 현재 학년도 자료 읽기/저장. PUT에 `baseUpdatedAt`을 보내면 그 사이 다른 곳에서 저장했을 때 409(`conflict`), `force`로 덮어쓰기, 바뀐 것이 없으면 KV에 쓰지 않음. 그날 처음 바뀔 때 이전 자료를 자동 백업 |
+| `GET /api/school/backups` | 학교 | 자동 백업 목록(최근 10개) |
+| `GET /api/school/backups/<id>` | 학교 | 백업 자료 |
 | `POST /api/school/password` | 학교 | 비밀번호 변경 |
 | `POST /api/school/rollover` | 학교 | 학년도 전환(현재 자료 보관 + 새 자료) |
 | `GET /api/school/archive/<학년도>` | 학교 | 지난 학년도 자료 |
 | `GET /api/t/<6자리>` | – | 강사용 조회(수업료·메모 제외) |
 | `POST /api/admin/login` | – | `ADMIN_PASSWORD` → 관리자 토큰 |
-| `GET/PUT /api/admin/settings` | 관리자 | 설정 읽기/저장 (`allowCreate`) |
+| `GET/PUT /api/admin/settings` | 관리자 | 설정 읽기/저장 (`allowCreate`, `holidays`, `holidayOff`) |
+| `GET /api/admin/export` | 관리자 | 전체 학교 백업(현재·지난 학년도, 비밀번호 제외) |
 | `GET /api/admin/schools` | 관리자 | 전체 학교 목록(색인 새로 고침 포함) |
 | `GET/DELETE /api/admin/schools/<코드>` | 관리자 | 학교 자료 보기/삭제 |
 | `POST /api/admin/schools/<코드>/reset` | 관리자 | 임시 비밀번호로 초기화 |
@@ -69,4 +72,4 @@ Node 18 이상이면 되고, 설치할 패키지는 없습니다(`dev`·`deploy`
 토큰은 HMAC-SHA256 서명(학교 30일·관리자 12시간)이며, 학교 토큰에는 비밀번호 버전이 들어 있어 비밀번호를 바꾸거나 초기화하면 기존 로그인이 무효가 됩니다.
 
 ## 공휴일 자료
-`src/engine.js` 의 `KR_HOLIDAYS` 에 연도별로 있습니다(우주항공청 월력요항 기준, 현재 2026~2028). 새 연도가 발표되면 같은 형식으로 추가하고 `tests/engine.test.cjs` 에 확인 항목을 넣어 주세요.
+`src/engine.js` 의 `KR_HOLIDAYS` 에 연도별로 있습니다(2026~2028년 우주항공청 월력요항, 2029~2030년 음력 환산 예정일). 최고관리자가 화면에서 추가·제외한 날은 `setHolidayOverrides()` 로 덮어씁니다. 새 연도가 발표되면 같은 형식으로 추가하고 `tests/engine.test.cjs` 에 확인 항목을 넣어 주세요.

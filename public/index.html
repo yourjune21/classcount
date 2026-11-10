@@ -395,6 +395,17 @@ tr.row-on td{background:#f3f8f5 !important}
 .brand-hero{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--acc);margin:-2px 0 8px}
 .app-footer a.linkbtn{text-decoration:underline}
 @media (max-width:560px){.brand-en{display:none}}
+/* v1.12 */
+#saveChip{cursor:pointer}
+.choice-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.choice-list .btn{justify-content:flex-start;height:auto;min-height:38px;padding:8px 14px;white-space:normal;text-align:left}
+.month-chips{display:flex;flex-wrap:wrap;gap:6px}
+.mchip{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-variant-numeric:tabular-nums}
+.mchip.cls{border-color:var(--acc2);color:var(--acc);background:var(--accbg)}
+.mchip.mk{border-color:var(--vac);color:var(--vac);background:var(--vacbg)}
+.mchip.cx{border-color:var(--hol);color:var(--hol);background:var(--holbg);text-decoration:line-through}
+.mchip.past{opacity:.5}
+.mchip.today{box-shadow:0 0 0 2px var(--gold);font-weight:700}
 
 </style>
 </head>
@@ -405,7 +416,7 @@ tr.row-on td{background:#f3f8f5 !important}
     <span id="who"></span>
     <select id="yearSel" class="in sm year-sel" style="display:none" title="학년도 선택"></select>
     <span class="sp"></span>
-    <span class="save-chip" id="saveChip"><i></i>자동 저장</span>
+    <span class="save-chip" id="saveChip" title="누르면 지금 서버에 저장합니다"><i></i>자동 저장</span>
     <span class="unsaved app-only" id="unsaved" style="display:none">JSON 파일로 저장 안 됨<button class="btn" data-act="backup">지금 저장</button></span>
     <button class="btn sm app-only ro-hide" data-act="backup">JSON 저장</button>
     <button class="btn sm owner-only" data-act="openAdmin" style="display:none">전체 학교 관리</button>
@@ -413,6 +424,8 @@ tr.row-on td{background:#f3f8f5 !important}
       <div class="menu-pop" id="menuPop">
         <button data-act="backup">JSON 파일로 저장</button>
         <button data-act="restore" class="ro-hide">JSON 파일 불러오기</button>
+        <button data-act="backupList" class="ro-hide">백업 · 복원 (자동 백업)</button>
+        <button data-act="printSheet">수업 확인서 인쇄</button>
         <hr class="ro-hide">
         <button data-act="sample" class="ro-hide">예시 자료 불러오기</button>
         <button data-act="reset" class="ro-hide">입력 내용 모두 지우기</button>
@@ -503,17 +516,29 @@ const KR_HOLIDAYS = {
   2026: [['01-01', '신정'], ['02-16', '설날'], ['02-17', '설날'], ['02-18', '설날'], ['03-01', '삼일절'], ['03-02', '대체공휴일(삼일절)'], ['05-01', '노동절'], ['05-05', '어린이날'], ['05-24', '부처님오신날'], ['05-25', '대체공휴일(부처님오신날)'], ['06-03', '전국동시지방선거'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['08-17', '대체공휴일(광복절)'], ['09-24', '추석'], ['09-25', '추석'], ['09-26', '추석'], ['10-03', '개천절'], ['10-05', '대체공휴일(개천절)'], ['10-09', '한글날'], ['12-25', '성탄절']],
   2027: [['01-01', '신정'], ['02-06', '설날'], ['02-07', '설날'], ['02-08', '설날'], ['02-09', '대체공휴일(설날)'], ['03-01', '삼일절'], ['05-01', '노동절'], ['05-03', '대체공휴일(노동절)'], ['05-05', '어린이날'], ['05-13', '부처님오신날'], ['06-06', '현충일'], ['07-17', '제헌절'], ['07-19', '대체공휴일(제헌절)'], ['08-15', '광복절'], ['08-16', '대체공휴일(광복절)'], ['09-14', '추석'], ['09-15', '추석'], ['09-16', '추석'], ['10-03', '개천절'], ['10-04', '대체공휴일(개천절)'], ['10-09', '한글날'], ['10-11', '대체공휴일(한글날)'], ['12-25', '성탄절'], ['12-27', '대체공휴일(성탄절)']],
   2028: [['01-01', '신정'], ['01-25', '설날'], ['01-26', '설날'], ['01-27', '설날'], ['03-01', '삼일절'], ['04-12', '국회의원선거'], ['05-01', '노동절'], ['05-02', '부처님오신날'], ['05-05', '어린이날'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['10-02', '추석'], ['10-03', '추석·개천절'], ['10-04', '추석'], ['10-05', '대체공휴일(추석)'], ['10-09', '한글날'], ['12-25', '성탄절']],
+  // 2029~2030년: 음력 환산 기준 예정일 (선거일·임시공휴일은 정해지면 최고관리자 ‘공휴일 관리’에서 추가)
+  2029: [['01-01', '신정'], ['02-12', '설날'], ['02-13', '설날'], ['02-14', '설날'], ['03-01', '삼일절'], ['05-01', '노동절'], ['05-05', '어린이날'], ['05-07', '대체공휴일(어린이날)'], ['05-20', '부처님오신날'], ['05-21', '대체공휴일(부처님오신날)'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['09-21', '추석'], ['09-22', '추석'], ['09-23', '추석'], ['09-24', '대체공휴일(추석)'], ['10-03', '개천절'], ['10-09', '한글날'], ['12-25', '성탄절']],
+  2030: [['01-01', '신정'], ['02-02', '설날'], ['02-03', '설날'], ['02-04', '설날'], ['02-05', '대체공휴일(설날)'], ['03-01', '삼일절'], ['05-01', '노동절'], ['05-05', '어린이날'], ['05-06', '대체공휴일(어린이날)'], ['05-09', '부처님오신날'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['09-11', '추석'], ['09-12', '추석'], ['09-13', '추석'], ['10-03', '개천절'], ['10-09', '한글날'], ['12-25', '성탄절']],
 };
+// 최고관리자가 추가·제외한 공휴일 (서버 설정에서 받아 적용)
+const HOL_OVERRIDE = { add: [], off: [] };
+function setHolidayOverrides(add, off) {
+  HOL_OVERRIDE.add = (Array.isArray(add) ? add : []).filter((h) => h && !isNaN(d2n(h.date))).map((h) => ({ date: h.date, name: String(h.name || '공휴일') }));
+  HOL_OVERRIDE.off = (Array.isArray(off) ? off : []).filter((d) => !isNaN(d2n(d)));
+}
+function builtinHolidays(year) { return (KR_HOLIDAYS[year] || []).map(([md, name]) => ({ date: year + '-' + md, name })); }
 
 function holidaysInRange(start, end) {
   const a = d2n(start), b = d2n(end), out = [];
   if (isNaN(a) || isNaN(b)) return out;
+  const off = new Set(HOL_OVERRIDE.off), seen = new Set();
   Object.keys(KR_HOLIDAYS).forEach((y) => {
     KR_HOLIDAYS[y].forEach(([md, name]) => {
       const iso = y + '-' + md, n = d2n(iso);
-      if (n >= a && n <= b) out.push({ date: iso, name });
+      if (n >= a && n <= b && !off.has(iso)) { out.push({ date: iso, name }); seen.add(iso); }
     });
   });
+  HOL_OVERRIDE.add.forEach((h) => { const n = d2n(h.date); if (n >= a && n <= b && !seen.has(h.date)) { out.push({ date: h.date, name: h.name, custom: true }); seen.add(h.date); } });
   return out.sort((x, y) => (x.date < y.date ? -1 : 1));
 }
 
@@ -647,15 +672,16 @@ function computeStats(state, scope) {
   return { days, scopedDays: allDays, months, weekday, wdClosed, depts, teachers: [...tmap.values()] };
 }
 
-if (typeof module !== 'undefined') module.exports = { weekOfMonth, week5On, commonOpen, d2n, n2d, dowOf, parseDateList, holidaysInRange, buildCalendar, deptSessions, computeStats, baseOpen, KR_HOLIDAYS, DOW };
+if (typeof module !== 'undefined') module.exports = { weekOfMonth, week5On, commonOpen, d2n, n2d, dowOf, parseDateList, holidaysInRange, setHolidayOverrides, builtinHolidays, buildCalendar, deptSessions, computeStats, baseOpen, KR_HOLIDAYS, DOW };
 
 </script>
 <script>
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.11.3';
+const APP_VERSION = '1.12.0';
 const APP_DATE = '2026-11-10';
 const CHANGELOG = [
+  ['1.12.0', '2026-11-10', 'Cloudflare 무료 한도에 맞춰 서버 저장 횟수 절감(30초 모아 저장·변경 없으면 건너뜀), 다른 기기에서 동시에 고친 경우 경고, 자동 백업·복원(서버 최근 10개, 이 기기 최근 7일), 최고관리자 공휴일 관리·전체 학교 백업, 2029~2030년 공휴일, 강사 수업 확인서(단순 확인용) 인쇄, 강사 화면에 다음 수업·이번 달 수업, 학교명 변경 안내'],
   ['1.11.3', '2026-11-10', 'Cloudflare KV 바인딩 변수 이름을 SCHOOL로 안내(기존 SCHOOLS도 그대로 동작)'],
   ['1.11.2', '2026-11-10', 'Cloudflare GitHub 연동 배포 오류(Invalid KV namespace ID) 수정: wrangler.toml 제거, 연결 설정은 대시보드에서'],
   ['1.11.1', '2026-11-10', '영문 이름 ClassCount 적용(제목·로고·하단), GitHub 저장소(yourjune21/classcount) 연결 링크'],
@@ -674,7 +700,7 @@ const CHANGELOG = [
 ];
 let SERVER_VERSION = null;
 const GITHUB_URL = 'https://github.com/yourjune21/classcount';
-let SETTINGS = { allowCreate: true };   // 최고관리자 설정
+let SETTINGS = { allowCreate: true, holidays: [], holidayOff: [] };   // 최고관리자 설정
 const STORE = 'ash';                       // 쿠키/로컬 저장 키
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -811,7 +837,7 @@ async function api(method, path, body, token) {
     r = await withTimeout(fetch('/api' + path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' }), 15000);
   } catch (e) { throw e && e.code ? e : { code: 'network' }; }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw { code: 'http', status: r.status, message: j.error || '서버 오류 (' + r.status + ')' };
+  if (!r.ok) throw { code: 'http', status: r.status, message: j.error || '서버 오류 (' + r.status + ')', data: j };
   return j;
 }
 const schoolToken = () => (getSession() || {}).token;
@@ -828,6 +854,11 @@ let YEARS = [];          // 보관된 지난 학년도 목록
 let S_CURRENT = null;    // 지난 학년도를 보는 동안 현재 학년도 자료 보관
 let CLAUDE_ARCHIVE = {}; // claude.ai 저장소: 학교 문서의 archive 필드
 let remoteWriting = false, remotePending = false, remoteTimer = null, remoteDirty = false, remoteDenied = false;
+let REMOTE_AT = 0;          // 서버에서 마지막으로 받은(또는 저장한) 자료의 수정 시각 → 동시 수정 감지용
+let LAST_SENT = null;       // 마지막으로 서버에 보낸 내용 (같으면 다시 보내지 않음)
+let CONFLICT = false;       // 다른 기기와 충돌해 자동 저장을 멈춘 상태
+let remoteDirtySince = 0;   // 서버에 아직 안 올린 첫 변경 시각
+const REMOTE_DELAY_HTTP = 30000, REMOTE_MAXWAIT_HTTP = 120000;   // Cloudflare KV 무료 한도(하루 쓰기 1,000회)를 고려해 모아서 저장
 const SESSION_KEY = STORE + '_session';
 const CODE_RE = /^[A-Za-z0-9_-]{3,20}$/;
 
@@ -863,15 +894,44 @@ function save() {
   if (DEMO) { updateSaveUI('체험 모드 · 저장되지 않음'); return; }
   S.savedAt = Date.now();
   updateSaveUI('저장 중…');
+  localBackup();
   try { localStorage.setItem(STORE + '_json', JSON.stringify(snapshot())); } catch (e) {}
   cookiePending = true;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => { cookiePending = false; const ok = await saveDevice(); if (!CUR || OFFLINE) updateSaveUI(ok ? '기기(쿠키)에 자동 저장됨' : '이 기기에 자동 저장됨'); }, 400);
-  if (CUR && (DB || BE === 'http') && !OFFLINE) { remoteDirty = true; clearTimeout(remoteTimer); remoteTimer = setTimeout(flushRemote, BE === 'http' ? 4000 : 1000); }
+  if (CUR && (DB || BE === 'http') && !OFFLINE) {
+    if (!remoteDirty) remoteDirtySince = Date.now();
+    remoteDirty = true; clearTimeout(remoteTimer);
+    if (CONFLICT) { updateSaveUI('다른 기기와 충돌 · 저장 멈춤'); return; }
+    if (BE === 'http') {
+      const wait = Math.max(0, Math.min(REMOTE_DELAY_HTTP, remoteDirtySince + REMOTE_MAXWAIT_HTTP - Date.now()));
+      remoteTimer = setTimeout(flushRemote, wait);
+      updateSaveUI('이 기기에 저장됨 · 잠시 뒤 서버에 저장');
+    } else remoteTimer = setTimeout(flushRemote, 1000);
+  }
 }
-async function flushRemote() {
+/* ---- 이 기기 자동 백업: 날마다 처음 고치기 전 상태를 최근 7일치 보관 ---- */
+const LOCAL_BK_KEEP = 7;
+const localBkKey = () => STORE + '_bk_' + (CUR || 'local');
+function localBackups() { try { return JSON.parse(localStorage.getItem(localBkKey()) || '[]'); } catch (e) { return []; } }
+function localBackup() {
+  if (VIEW_YEAR || RO || DEMO) return;
+  try {
+    const day = todayIso(), list = localBackups();
+    if (list.some((b) => b.day === day)) return;
+    const prev = localStorage.getItem(STORE + '_json'); if (!prev) return;
+    const ps = JSON.parse(prev); if ((ps._school || null) !== (CUR || null) || !(ps.depts || []).length && !(ps.info || {}).school) return;
+    list.unshift({ day, at: ps.savedAt || Date.now(), deptCount: (ps.depts || []).length, json: prev });
+    while (list.length > LOCAL_BK_KEEP) list.pop();
+    try { localStorage.setItem(localBkKey(), JSON.stringify(list)); }
+    catch (e) { while (list.length > 1) { list.pop(); try { localStorage.setItem(localBkKey(), JSON.stringify(list)); return; } catch (e2) {} } }
+  } catch (e) {}
+}
+async function flushRemote(opts = {}) {
   if (!CUR || !(DB || BE === 'http') || OFFLINE || RO) return;
+  if (CONFLICT && !opts.force) return;
   if (remoteWriting) { remotePending = true; return; }
+  clearTimeout(remoteTimer);
   remoteWriting = true; remoteDirty = false;
   const snap = snapshot();
   try {
@@ -879,19 +939,65 @@ async function flushRemote() {
       json: JSON.stringify(snap), name: S.info.school || '', year: S.info.year || '',
       groupCount: S.groups.length, deptCount: S.depts.length, teacherCount: new Set(S.depts.map((d) => d.teacher).filter(Boolean)).size,
     };
-    if (BE === 'http') await api('PUT', '/school', payload, schoolToken());
-    else { await schoolRef(CUR).update({ ...payload, updatedAt: Date.now(), updatedBy: USER_ID || '' }); await syncSharesClaude(); }
-    remoteDenied = false;
+    const sig = JSON.stringify(payload);
+    if (sig === LAST_SENT && !opts.force && !opts.backupNow) { remoteWriting = false; updateSaveUI('서버에 저장됨'); return; }   // 바뀐 것이 없으면 보내지 않음
+    if (BE === 'http') {
+      const r = await api('PUT', '/school', { ...payload, baseUpdatedAt: REMOTE_AT || undefined, force: !!opts.force, backupNow: opts.backupNow || undefined }, schoolToken());
+      if (r.updatedAt) REMOTE_AT = r.updatedAt;
+      if (r.dupName) toast(`같은 이름(${S.info.school})의 학교가 이미 있어, 학교명으로는 로그인할 수 없습니다. 학교코드(${CUR})로 로그인하세요.`);
+    } else {
+      if (!opts.force && REMOTE_AT) {
+        const cur = await withTimeout(schoolRef(CUR).get());
+        const at = cur.exists ? cur.data().updatedAt || 0 : 0;
+        if (at && at !== REMOTE_AT) throw { code: 'http', status: 409, message: '다른 기기에서 먼저 수정한 내용이 있습니다.', data: { conflict: true, updatedAt: at } };
+      }
+      const now = Date.now();
+      await schoolRef(CUR).update({ ...payload, updatedAt: now, updatedBy: USER_ID || '' }); REMOTE_AT = now; await syncSharesClaude();
+    }
+    LAST_SENT = sig; CONFLICT = false; remoteDenied = false; remoteDirtySince = 0;
     updateSaveUI('서버에 저장됨 · ' + new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
   } catch (e) {
     remoteDirty = true;
-    if (e && e.code === 'invalid_argument') { remoteDenied = true; updateSaveUI('서버 저장 권한 없음 (이 기기에만 저장)'); }
+    if (e && e.status === 409 && e.data && e.data.conflict) { CONFLICT = true; updateSaveUI('다른 기기와 충돌 · 저장 멈춤'); conflictModal(e.data.updatedAt); }
+    else if (e && e.code === 'invalid_argument') { remoteDenied = true; updateSaveUI('서버 저장 권한 없음 (이 기기에만 저장)'); }
     else if (e && e.status === 401) { remoteDenied = true; updateSaveUI('로그인 만료 · 다시 로그인하세요'); toast('로그인이 만료되었습니다. 입력 내용은 이 기기에 남아 있으니 다시 로그인하세요.'); }
     else updateSaveUI('서버 저장 실패 · 다시 시도 중');
-    if (!remoteDenied) setTimeout(flushRemote, 5000);
+    if (!remoteDenied && !CONFLICT) setTimeout(flushRemote, 15000);
   }
   remoteWriting = false;
   if (remotePending) { remotePending = false; flushRemote(); }
+}
+// 다른 기기(사람)가 먼저 저장한 경우: 서버 내용 불러오기 / 내 내용으로 덮어쓰기 / 내 내용 JSON 저장
+function conflictModal(at) {
+  const when = at ? new Date(at).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '방금';
+  modal('다른 곳에서 먼저 수정했습니다', `<p><b>${esc(when)}</b>에 다른 기기(또는 다른 담당자)가 이 학교 자료를 저장했습니다. 지금 화면의 내용을 그대로 저장하면 그 수정 내용이 사라집니다.</p>
+    <p>자동 저장을 멈췄습니다. 어떻게 할지 고르세요.</p>
+    <div class="choice-list">
+      <button class="btn pri" data-cf="load">서버 내용 불러오기 <span class="muted" style="font-weight:400">— 이 화면에서 고친 내용은 버림 (추천)</span></button>
+      <button class="btn" data-cf="json">내 내용을 JSON 파일로 먼저 저장</button>
+      <button class="btn danger" data-cf="force">내 내용으로 덮어쓰기 <span class="muted" style="font-weight:400">— 다른 곳의 수정 내용이 사라짐</span></button>
+    </div>`, '나중에 결정', null, '');
+  $$('#modal [data-cf]').forEach((b) => (b.onclick = async () => {
+    const k = b.dataset.cf;
+    if (k === 'json') { saveJson(); return; }
+    $('#modal').classList.remove('open');
+    if (k === 'force') { CONFLICT = false; await flushRemote({ force: true, backupNow: 'manual' }); toast('내 내용으로 저장했습니다. 덮어쓰기 전 서버 내용은 백업에 남겨 두었습니다.'); }
+    else await reloadFromServer();
+  }));
+}
+async function reloadFromServer() {
+  try {
+    let doc;
+    if (BE === 'http') doc = (await api('GET', '/school', null, schoolToken())).school;
+    else { const sn = await withTimeout(schoolRef(CUR).get()); doc = sn.data(); }
+    remoteDirty = false; CONFLICT = false;
+    try { localStorage.removeItem(STORE + '_json'); } catch (e) {}
+    const st = doc.json ? JSON.parse(doc.json) : {};
+    st.savedAt = 0; normalize(st); S._school = CUR;
+    REMOTE_AT = doc.updatedAt || 0; LAST_SENT = null;
+    saveDevice(); render(); updateSaveUI('서버 내용을 불러왔습니다');
+    toast('서버에 저장된 최신 내용을 불러왔습니다.');
+  } catch (e) { toast(dbErrText(e)); }
 }
 // claude.ai 저장소: shares/<코드> → 학교코드 색인 유지
 let SYNCED_SHARES = null;
@@ -927,10 +1033,15 @@ window.addEventListener('beforeunload', (e) => {
   if (isDirty()) { e.preventDefault(); e.returnValue = '저장되지 않은 변경 사항이 있습니다.'; return e.returnValue; }
 });
 let USER_ID = null;
+function applyHolidaySettings(o) {
+  SETTINGS.holidays = Array.isArray(o && o.holidays) ? o.holidays : [];
+  SETTINGS.holidayOff = Array.isArray(o && o.holidayOff) ? o.holidayOff : [];
+  setHolidayOverrides(SETTINGS.holidays, SETTINGS.holidayOff);
+}
 async function initCapabilities() {
   if (!window.claude || !window.claude.use) {
     // claude.ai 밖(예: Cloudflare Pages)에서는 같은 주소의 /api 서버를 사용
-    try { const h = await api('GET', '/health'); BE = 'http'; CONN = 'ok'; ADMIN_AVAILABLE = !!h.admin; IS_OWNER = !!adminTokenGet(); SERVER_VERSION = h.version || '1.6 이하'; SETTINGS.allowCreate = h.allowCreate !== false; }
+    try { const h = await api('GET', '/health'); BE = 'http'; CONN = 'ok'; ADMIN_AVAILABLE = !!h.admin; IS_OWNER = !!adminTokenGet(); SERVER_VERSION = h.version || '1.6 이하'; SETTINGS.allowCreate = h.allowCreate !== false; applyHolidaySettings(h); }
     catch (e) { CONN = 'none'; }
     return;
   }
@@ -942,7 +1053,7 @@ async function initCapabilities() {
     try { IS_OWNER = user ? !!(await user.isOwner()) : false; } catch (e) { IS_OWNER = false; }
     try { USER_ID = user ? await user.id() : null; } catch (e) { USER_ID = null; }
     CONN = 'ok';
-    try { const sn = await withTimeout(db.doc('settings/app').get(), 8000); if (sn.exists) SETTINGS.allowCreate = sn.data().allowCreate !== false; } catch (e) {}
+    try { const sn = await withTimeout(db.doc('settings/app').get(), 8000); if (sn.exists) { SETTINGS.allowCreate = sn.data().allowCreate !== false; applyHolidaySettings(sn.data()); } } catch (e) {}
   } else CONN = 'none';
 }
 
@@ -952,6 +1063,7 @@ async function enterSchool(code, doc, opts = {}) {
   try { st = doc.json ? JSON.parse(doc.json) : null; } catch (e) { st = null; }
   const local = await loadDevice();
   CUR = code; OFFLINE = false; ADMIN_VIEW = !!opts.readonly; RO = ADMIN_VIEW; MODE = 'app'; SYNCED_SHARES = null;
+  REMOTE_AT = doc.updatedAt || 0; LAST_SENT = null; CONFLICT = false; remoteDirty = false; remoteDirtySince = 0;
   VIEW_YEAR = null; S_CURRENT = null;
   CLAUDE_ARCHIVE = (BE === 'claude' && doc.archive) || {};
   YEARS = BE === 'http' ? (doc.years || []) : Object.keys(CLAUDE_ARCHIVE).sort();
@@ -1117,6 +1229,15 @@ function autoSummer() {
   else if (!v.start) toast('여름방학 종료일을 맞췄습니다. 1학기 종료일(여름방학식)을 넣으면 시작일도 채워집니다.');
   else toast('여름방학 시작일을 맞췄습니다. 2학기 시작일을 넣으면 종료일도 채워집니다.');
 }
+// 학사일정 기간의 평일 공휴일 중 휴업일로 들어 있지 않은 날 (새로 지정된 임시공휴일 등 안내용)
+function missingHolidays() {
+  const c = S.cal; if (isNaN(d2n(c.start)) || isNaN(d2n(c.end))) return [];
+  const covered = new Set(), ign = new Set(c.holIgnore || []);
+  c.closures.forEach((h) => { const a = d2n(h.start), b = isNaN(d2n(h.end)) ? a : d2n(h.end); if (!isNaN(a)) for (let k = a; k <= b; k++) covered.add(k); });
+  // 방학 중 미운영 기간은 안내하지 않음
+  c.vacations.forEach((v) => { const a = d2n(v.start), b = d2n(v.end); if (!v.run && !isNaN(a) && !isNaN(b)) for (let k = a; k <= b; k++) covered.add(k); });
+  return holidaysInRange(c.start, c.end).filter((h) => { const n = d2n(h.date), w = dowOf(n); return w > 0 && w < 6 && !covered.has(n) && !ign.has(h.date); });
+}
 // 다음 평일: 주말과 학사일정의 공휴일을 건너뜀
 function nextWeekday(iso) {
   let n = d2n(iso); if (isNaN(n)) return '';
@@ -1166,7 +1287,7 @@ function buildNextYear(prev, opt) {
     nx.quarters.push({ id: uid(), name: '4분기', start: ny + '-12-01', end: nx.cal.end });
   }
   nx.depts = prev.depts.map((d) => ({ ...d, start: '', end: '', except: '', extra: '', cancels: [], makeups: [], open: false, share: opt.share ? d.share : newShare() }));
-  nx.cal.sem1End = '';
+  nx.cal.sem1End = ''; nx.cal.holIgnore = [];
   nx.step = 2; nx.savedAt = Date.now(); nx.exportedAt = 0;
   nx.ui = Object.assign({}, prev.ui, { tab: 'progress', asOf: '', scope: '', sort: {}, statFold: {} });
   return nx;
@@ -1181,11 +1302,11 @@ async function doRollover(opt) {
       const meta = { name: nx.info.school || '', year: nx.info.year, groupCount: nx.groups.length, deptCount: nx.depts.length, teacherCount: new Set(nx.depts.map((d) => d.teacher).filter(Boolean)).size };
       if (BE === 'http') {
         const r = await api('POST', '/school/rollover', { ...meta, archiveYear: y, archiveJson: JSON.stringify(archived), json: JSON.stringify(nx) }, schoolToken());
-        YEARS = r.years;
+        YEARS = r.years; if (r.updatedAt) REMOTE_AT = r.updatedAt; LAST_SENT = null;
       } else {
         const sn = await withTimeout(schoolRef(CUR).get());
         if (sn.exists && sn.data().archive && sn.data().archive[y]) throw { code: 'http', message: y + '학년도는 이미 보관되어 있습니다.' };
-        await schoolRef(CUR).update({ archive: { [y]: JSON.stringify(archived) }, json: JSON.stringify(nx), ...meta, updatedAt: Date.now() });
+        const at = Date.now(); await schoolRef(CUR).update({ archive: { [y]: JSON.stringify(archived) }, json: JSON.stringify(nx), ...meta, updatedAt: at }); REMOTE_AT = at; LAST_SENT = null;
         CLAUDE_ARCHIVE[y] = JSON.stringify(archived); YEARS = Object.keys(CLAUDE_ARCHIVE).sort();
       }
       normalize(nx); S._school = CUR; remoteDirty = false;
@@ -1266,13 +1387,14 @@ function renderAdmin() {
     <div class="toolbar"><div><h2 style="margin:0">전체 학교 관리</h2><div class="help" style="margin:0">최고관리자 전용 · 등록 학교 ${L ? L.length : '…'}곳</div></div><span class="sp"></span>
       <label class="admin-toggle" title="첫 화면의 ‘새 학교 만들기’를 켜거나 끕니다"><span class="toggle"><input type="checkbox" id="allowCreate" ${SETTINGS.allowCreate ? 'checked' : ''}><span></span></span>새 학교 생성 <b class="${SETTINGS.allowCreate ? 'on' : 'off'}">${SETTINGS.allowCreate ? '허용' : '중지'}</b></label>
       <input class="in sm" style="width:200px" placeholder="학교명·코드 검색" data-admin-q value="${esc(ADMIN.q)}">
+      <button class="btn sm" data-act="holidayAdmin">공휴일 관리</button><button class="btn sm" data-act="adminExport">전체 백업 받기</button>
       <button class="btn sm" data-act="adminRefresh">새로고침</button><button class="btn sm" data-act="toGate">← 첫 화면</button></div>
     ${ADMIN.err ? `<div class="alert warn">${esc(ADMIN.err)}</div>` : ''}
     ${L === null ? '<div class="empty">불러오는 중…</div>' : `<div class="tbl-wrap"><table class="t"><thead><tr>${th('name', '학교명')}${th('id', '학교코드')}${th('year', '학년도', 'r')}${th('groupCount', '분류', 'r')}${th('deptCount', '프로그램', 'r')}${th('teacherCount', '강사', 'r')}${th('createdAt', '생성일')}${th('updatedAt', '마지막 수정')}<th></th></tr></thead><tbody>
       ${rows.map((s) => `<tr><td><b>${esc(s.name || '(이름 없음)')}</b>${s.mustChange ? ' <span class="tag warn">임시 비밀번호</span>' : ''}</td><td class="num">${esc(s.id)}</td><td class="r num">${esc(s.year || '')}</td><td class="r num">${fmt(s.groupCount)}</td><td class="r num">${fmt(s.deptCount)}</td><td class="r num">${fmt(s.teacherCount)}</td><td class="num muted">${fd(s.createdAt)}</td><td class="num">${fd(s.updatedAt)}</td>
         <td class="r" style="white-space:nowrap"><button class="btn sm" data-aview="${esc(s.id)}">입력사항 보기</button> <button class="btn sm" data-areset="${esc(s.id)}">비밀번호 초기화</button> <button class="btn sm icon ghost danger" data-adel="${esc(s.id)}" title="학교 삭제">✕</button></td></tr>`).join('') || `<tr><td colspan="9" class="empty">${ADMIN.q ? '검색 결과가 없습니다.' : '등록된 학교가 없습니다.'}</td></tr>`}
     </tbody></table></div>`}
-    <div class="help">‘입력사항 보기’는 읽기 전용으로 열립니다. 학교 담당자가 비밀번호를 잊으면 ‘비밀번호 초기화’로 임시 비밀번호를 만들어 알려 주세요. 다음 로그인 때 새 비밀번호를 정하게 됩니다.</div>
+    <div class="help">‘공휴일 관리’에서 임시공휴일·선거일을 추가하면 모든 학교에 안내됩니다. ‘전체 백업 받기’는 모든 학교의 입력 자료(지난 학년도 포함, 비밀번호 제외)를 JSON 파일 하나로 저장합니다. ‘입력사항 보기’는 읽기 전용으로 열립니다. 학교 담당자가 비밀번호를 잊으면 ‘비밀번호 초기화’로 임시 비밀번호를 만들어 알려 주세요. 다음 로그인 때 새 비밀번호를 정하게 됩니다.</div>
   </div>`;
 }
 async function setAllowCreate(on) {
@@ -1416,7 +1538,7 @@ function renderStep1() {
     <h2>1. 기본 정보</h2>
     <p class="lead">학교명과 학년도, 집계할 학기를 입력하세요. 학기는 통계 화면의 기본 집계 범위가 됩니다.</p>
     <div class="grid g3">
-      <div class="field"><label>학교명</label><input class="in" data-b="info.school" value="${esc(i.school)}" placeholder="예: ○○초등학교"></div>
+      <div class="field"><label>학교명</label><input class="in" data-b="info.school" value="${esc(i.school)}" placeholder="예: ○○초등학교">${CUR && !OFFLINE && !DEMO ? '<div class="help">이름을 고치면 저장할 때 ‘학교 찾기’와 학교명 로그인에도 함께 바뀝니다. 학교코드는 바뀌지 않습니다.</div>' : ''}</div>
       <div class="field"><label>학년도</label><input class="in num" type="number" inputmode="numeric" min="${YEAR_MIN}" max="${YEAR_MAX}" step="1" data-b="info.year" value="${esc(i.year)}" placeholder="예: 2026"><div class="help" id="yearHelp">${validYear(i.year) ? `학사일정 기본 기간: ${i.year}.3.1. ~ ${Number(i.year) + 1}.2.${Number(yearEnd(i.year).slice(8))}.` : `${YEAR_MIN}~${YEAR_MAX}년 사이로 입력하세요.`}</div></div>
       <div class="field"><label>담당자 <span class="opt">(선택)</span></label><input class="in" data-b="info.manager" value="${esc(i.manager)}" placeholder="예: 늘봄지원실"></div>
     </div>
@@ -1485,6 +1607,7 @@ function renderStep2() {
     </div>
     <div class="help">1학기 종료일과 2학기 시작일을 넣으면 1학기 기간과 여름방학(종료일 다음 날 ~ 개학 전날)이 자동으로 채워집니다.${!isNaN(d2n(c.start)) && !isNaN(d2n(c.sem2Start)) ? ` 현재 1학기: <b>${fmtDate(c.start)} ~ ${fmtDate(c.sem1End || n2d(d2n(c.sem2Start) - 1))}</b>` : ''}</div>
     ${rangeBad ? '<div class="alert warn">종료일이 시작일보다 앞서 있습니다.</div>' : ''}
+    ${(() => { const miss = missingHolidays(); return miss.length && !RO ? `<div class="alert info"><div><b>학사일정에 없는 평일 공휴일 ${miss.length}일</b> · ${miss.slice(0, 6).map((h) => `${fmtDate(h.date)} ${esc(h.name)}`).join(', ')}${miss.length > 6 ? ' 외' : ''}<br><span class="muted">임시공휴일·선거일처럼 새로 정해진 날일 수 있습니다. 이날 방과후를 운영한다면 ‘무시’를 누르세요.</span></div><span class="sp"></span><button class="btn sm pri" data-act="autoHol">추가</button><button class="btn sm" data-act="holIgnore">무시</button></div>` : ''; })()}
     <div class="toolbar" style="margin:12px 0 0">
       ${!c.start && S.info.year ? `<button class="btn sm" data-act="defaultYear">${S.info.year}.3.1. ~ ${Number(S.info.year) + 1}.2.말.로 채우기</button>` : ''}
       <button class="btn sm" data-act="autoHol" ${stepDone(2) ? '' : 'disabled'}>공휴일 자동 추가</button>
@@ -1492,7 +1615,7 @@ function renderStep2() {
       <button class="btn sm ghost" data-act="semAll" data-v="1">모두 펼치기</button><button class="btn sm ghost" data-act="semAll" data-v="0">모두 접기</button>
     </div>
     ${semBlock(1)}${semBlock(2)}
-    <div class="help" style="margin-top:10px">공휴일 자동 추가는 우주항공청 월력요항(2026~2028년, 노동절·제헌절 포함) 기준이며 주말과 겹친 날은 생략합니다. 재량휴업일·개교기념일 등은 학교 학사일정에 맞게 추가하세요.</div>
+    <div class="help" style="margin-top:10px">공휴일 자동 추가는 우주항공청 월력요항(2026~2028년, 노동절·제헌절 포함)과 음력 환산 예정일(2029~2030년), 최고관리자가 추가한 공휴일(임시공휴일·선거일 등) 기준이며 주말과 겹친 날은 생략합니다. 재량휴업일·개교기념일 등은 학교 학사일정에 맞게 추가하세요.</div>
     ${navBar()}
   </div>`;
 }
@@ -1788,6 +1911,7 @@ function renderStep5() {
       ${['quarter', 'weekday', 'month', 'week', 'teacher'].includes(u.tab) ? '<span class="help" style="margin:0">제목을 누르면 정렬됩니다 (내림차순 → 오름차순 → 원래 순서). 분류 행을 누르면 접히고 펼쳐집니다.</span>' : ''}
       <span class="sp"></span>
       ${['quarter', 'weekday', 'month', 'week', 'teacher'].includes(u.tab) ? '<button class="btn sm" data-act="copyTable">표 복사</button>' : ''}
+      <button class="btn sm" data-act="printSheet">수업 확인서 인쇄</button>
       <button class="btn sm pri" data-act="exportXlsx">엑셀 파일로 저장</button>
     </div>
     ${body}
@@ -2028,7 +2152,7 @@ function shareModal(deptId) {
     <div class="alert info" style="margin-top:12px">링크가 다른 사람에게 퍼졌다면 ‘새 링크 만들기’를 누르세요. 이전 링크는 저장 후 바로 쓸 수 없게 됩니다.</div>`, '닫기', null, '');
   const acts = $('#modal .acts');
   const regen = document.createElement('button'); regen.className = 'btn'; regen.textContent = '새 링크 만들기';
-  regen.onclick = () => { d.share = newShare(); save(); shareModal(deptId); toast('새 링크를 만들었습니다. 이전 링크는 더 이상 쓸 수 없습니다.'); };
+  regen.onclick = () => { d.share = newShare(); save(); if (CUR && !OFFLINE) flushRemote(); shareModal(deptId); toast('새 링크를 만들었습니다. 이전 링크는 더 이상 쓸 수 없습니다.'); };
   acts.prepend(regen);
 }
 function shareListModal() {
@@ -2068,6 +2192,18 @@ async function openTeacher(code) {
   } catch (e) { TEACHER.err = dbErrText(e); }
   render(); window.scrollTo(0, 0);
 }
+// 강사 화면: 이번 달 수업 (지난 수업·남은 수업·휴강·보강 한눈에)
+function teacherMonth(r, d) {
+  const t = todayIso(), ym = t.slice(0, 7), today = d2n(t);
+  const mk = new Set((d.makeups || []).map((x) => x.d));
+  const items = r.dates.filter((iso) => iso.startsWith(ym)).map((iso) => ({ iso, kind: mk.has(iso) ? 'mk' : 'cls' }))
+    .concat((d.cancels || []).filter((x) => x.d.startsWith(ym)).map((x) => ({ iso: x.d, kind: 'cx', note: x.note })))
+    .sort((a, b) => (a.iso < b.iso ? -1 : 1));
+  if (!items.length) return '';
+  const left = items.filter((x) => x.kind !== 'cx' && d2n(x.iso) >= today).length;
+  return `<div class="sec"><div class="sec-h"><h3>이번 달 수업 (${Number(ym.slice(5))}월)</h3><span class="hint">남은 수업 ${left}회</span></div>
+    <div class="month-chips">${items.map((x) => { const past = d2n(x.iso) < today, isT = x.iso === t; return `<span class="mchip ${x.kind} ${past ? 'past' : ''} ${isT ? 'today' : ''}" title="${x.kind === 'cx' ? '휴강' + (x.note ? ': ' + esc(x.note) : '') : x.kind === 'mk' ? '보강' : '수업'}">${fmtDate(x.iso)}${x.kind === 'cx' ? ' 휴강' : x.kind === 'mk' ? ' 보강' : ''}${isT ? ' · 오늘' : ''}</span>`; }).join('')}</div></div>`;
+}
 function renderTeacher() {
   const T0 = TEACHER || {};
   if (T0.err) return `<div class="card" style="max-width:640px;margin:20px auto"><h2>강사용 조회</h2><div class="alert warn">${esc(T0.err)}</div><button class="btn" data-act="toGate">첫 화면으로</button></div>`;
@@ -2092,12 +2228,13 @@ function renderTeacher() {
       ${(() => {
         const t = new Date(), today = d2n(t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'));
         const qi = S.quarters.findIndex((q) => today >= d2n(q.start) && today <= d2n(q.end));
-        const left = r.dates.filter((iso) => d2n(iso) >= today).length;
+        const left = r.dates.filter((iso) => d2n(iso) >= today).length, next = r.dates.find((iso) => d2n(iso) >= today);
         return `<div class="kpi"><div class="l">${qi >= 0 ? '이번 분기 (' + esc(S.quarters[qi].name) + ')' : '이번 분기'}</div><div class="v num">${qi >= 0 ? r.byQP[qi] + '<small>차시</small>' : '<span style="font-size:14px;color:var(--mute);font-weight:400">분기 기간 아님</span>'}</div></div>
-          <div class="kpi"><div class="l">남은 수업 (오늘 포함)</div><div class="v num">${left}<small>회</small></div></div>`;
+          <div class="kpi"><div class="l">다음 수업 · 남은 수업</div><div class="v num">${next ? fmtDate(next) : '<span style="font-size:14px;color:var(--mute);font-weight:400">없음</span>'}<small> · ${left}회</small></div></div>`;
       })()}
     </div>
-    <div class="sec-h"><h3>내 수업일</h3><span class="sp"></span>${viewSeg('ui.tview', S.ui.tview)}<button class="btn sm" data-act="copyDates">날짜 목록 복사</button></div>
+    ${teacherMonth(r, d)}
+    <div class="sec-h"><h3>내 수업일</h3><span class="sp"></span>${viewSeg('ui.tview', S.ui.tview)}<button class="btn sm" data-act="copyDates">날짜 목록 복사</button><button class="btn sm" data-act="printSheetT">수업 확인서 인쇄</button></div>
     ${deptSchedule(st, r, S.ui.tview)}
     ${(d.cancels || []).length || (d.makeups || []).length ? `<div class="sec"><div class="sec-h"><h3>휴강·보강 안내</h3></div><div class="grid g2">
       <div class="tbl-wrap"><table class="t"><thead><tr><th>휴강일</th><th>사유</th></tr></thead><tbody>${(d.cancels || []).map((c) => `<tr><td class="num">${fmtDate(c.d)}</td><td>${esc(c.note || '')}</td></tr>`).join('') || '<tr><td colspan="2" class="empty">없음</td></tr>'}</tbody></table></div>
@@ -2110,6 +2247,168 @@ function renderTeacher() {
   </div>`;
 }
 
+
+/* ================= 백업 · 복원 ================= */
+async function backupModal() {
+  const fd = (t) => (t ? new Date(t).toLocaleString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '–');
+  const srv = CUR && BE === 'http' && !OFFLINE && !DEMO && !ADMIN_VIEW;
+  const lbl = { auto: '그날 처음 고치기 전', manual: '덮어쓰기 전', restore: '복원하기 전' };
+  const local = localBackups();
+  const localRows = local.map((b, i) => `<tr><td class="num">${fd(b.at)}</td><td>이 기기</td><td class="r num">${fmt(b.deptCount)}개</td><td class="r"><button class="btn sm" data-bk-local="${i}">복원</button></td></tr>`).join('');
+  modal('백업 · 복원', `<p>입력 내용은 <b>날마다 처음 고치기 전 상태</b>로 자동 백업됩니다. 실수로 지우거나 잘못 고쳤을 때 이전 상태로 되돌릴 수 있습니다.</p>
+    <div class="tbl-wrap" style="max-height:340px"><table class="t"><thead><tr><th>백업 시점 (그 시점까지의 내용)</th><th>위치</th><th class="r">프로그램</th><th></th></tr></thead><tbody id="bkBody">
+      ${srv ? '<tr><td colspan="4" class="empty">서버 백업을 불러오는 중…</td></tr>' : ''}${localRows}
+      ${!srv && !local.length ? '<tr><td colspan="4" class="empty">아직 백업이 없습니다. 내일부터 하루 한 번씩 쌓입니다.</td></tr>' : ''}
+    </tbody></table></div>
+    <div class="help">${srv ? '서버에는 최근 10개, ' : ''}이 기기(브라우저)에는 최근 7일치를 보관합니다. 복원해도 복원 직전 내용이 다시 백업되므로 되돌릴 수 있습니다. 오래 보관하려면 ‘JSON 파일로 저장’을 쓰세요.</div>`, '닫기', null, '');
+  const bind = () => {
+    $$('#modal [data-bk-local]').forEach((b) => (b.onclick = () => restoreFrom(JSON.parse(local[+b.dataset.bkLocal].json), fd(local[+b.dataset.bkLocal].at))));
+    $$('#modal [data-bk-srv]').forEach((b) => (b.onclick = async () => {
+      try { const r = await api('GET', '/school/backups/' + b.dataset.bkSrv, null, schoolToken()); restoreFrom(JSON.parse(r.json), b.dataset.when); }
+      catch (e) { toast(dbErrText(e)); }
+    }));
+  };
+  bind();
+  if (srv) {
+    try {
+      const list = (await api('GET', '/school/backups', null, schoolToken())).backups || [];
+      const body = $('#bkBody'); if (!body) return;
+      body.innerHTML = list.map((b) => `<tr><td class="num">${fd(b.at)} <span class="muted">· ${lbl[b.label] || ''}</span></td><td>서버</td><td class="r num">${fmt(b.deptCount)}개</td><td class="r"><button class="btn sm" data-bk-srv="${esc(b.id)}" data-when="${esc(fd(b.at))}">복원</button></td></tr>`).join('') + localRows
+        || '<tr><td colspan="4" class="empty">아직 백업이 없습니다. 오늘 이후 처음 고칠 때부터 쌓입니다.</td></tr>';
+      bind();
+    } catch (e) { const body = $('#bkBody'); if (body) body.insertAdjacentHTML('afterbegin', `<tr><td colspan="4" class="empty">${esc(dbErrText(e))}</td></tr>`); }
+  }
+}
+function restoreFrom(st, when) {
+  if (!st || !st.info || !st.cal) return toast('백업 자료를 읽을 수 없습니다.');
+  confirmBox('백업으로 되돌리기', `<b>${esc(when)}</b> 시점의 내용으로 되돌립니다. 지금 내용은 ${CUR && !OFFLINE ? '서버 백업에' : '이 기기 백업에'} 남겨 두므로 다시 되돌릴 수 있습니다.`, '되돌리기', async () => {
+    const keepUi = S.ui;
+    if (!CUR || OFFLINE) { try { const day = todayIso() + ' 복원 전', list = localBackups(); list.unshift({ day, at: Date.now(), deptCount: S.depts.length, json: JSON.stringify(snapshot()) }); while (list.length > LOCAL_BK_KEEP + 1) list.pop(); localStorage.setItem(localBkKey(), JSON.stringify(list)); } catch (e) {} }
+    normalize(st); S.ui = Object.assign(S.ui, { tab: keepUi.tab }); S._school = CUR || undefined;
+    if (CUR && !OFFLINE) { S.savedAt = Date.now(); remoteDirty = true; await flushRemote({ backupNow: 'restore' }); saveDevice(); }
+    else { S.savedAt = Date.now(); saveDevice(); }
+    render(); toast('백업 시점의 내용으로 되돌렸습니다.');
+  });
+}
+
+/* ================= 최고관리자: 공휴일 관리 · 전체 백업 ================= */
+function holidayAdminModal() {
+  const years = [2026, 2027, 2028, 2029, 2030];
+  let y = Math.min(Math.max(new Date().getFullYear(), 2026), 2030);
+  let add = (SETTINGS.holidays || []).slice(), off = new Set(SETTINGS.holidayOff || []);
+  const draw = () => {
+    const bi = builtinHolidays(y), cu = add.filter((h) => h.date.startsWith(y + '-'));
+    $('#holBox').innerHTML = `<div class="seg" style="margin-bottom:8px">${years.map((v) => `<button type="button" class="${v === y ? 'on' : ''}" data-hy="${v}">${v}</button>`).join('')}</div>
+      <div class="tbl-wrap" style="max-height:300px"><table class="t"><thead><tr><th>날짜</th><th>명칭</th><th>구분</th><th class="c">적용</th></tr></thead><tbody>
+      ${[...bi.map((h) => ({ ...h, kind: 'b' })), ...cu.map((h) => ({ ...h, kind: 'c' }))].sort((a, b) => (a.date < b.date ? -1 : 1)).map((h) => `<tr><td class="num">${fmtDate(h.date)}</td><td>${esc(h.name)}</td><td>${h.kind === 'b' ? '<span class="muted">기본</span>' : '<span class="tag acc">추가</span>'}</td>
+        <td class="c">${h.kind === 'b' ? `<label class="toggle"><input type="checkbox" data-hoff="${h.date}" ${off.has(h.date) ? '' : 'checked'}><span></span></label>` : `<button type="button" class="btn sm icon ghost danger" data-hdel="${h.date}" title="삭제">✕</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">공휴일 없음</td></tr>'}
+      </tbody></table></div>
+      <div class="toolbar" style="margin:10px 0 0"><input class="in sm" type="date" id="hDate" min="${y}-01-01" max="${y}-12-31"><input class="in sm" id="hName" placeholder="명칭 (예: 임시공휴일, 대통령선거)" style="flex:1"><button type="button" class="btn sm" id="hAdd">+ 추가</button></div>`;
+    $$('#holBox [data-hy]').forEach((b) => (b.onclick = () => { y = +b.dataset.hy; draw(); }));
+    $$('#holBox [data-hoff]').forEach((b) => (b.onchange = () => { b.checked ? off.delete(b.dataset.hoff) : off.add(b.dataset.hoff); }));
+    $$('#holBox [data-hdel]').forEach((b) => (b.onclick = () => { add = add.filter((h) => h.date !== b.dataset.hdel); draw(); }));
+    $('#hAdd').onclick = () => {
+      const d = $('#hDate').value, n = $('#hName').value.trim();
+      if (isNaN(d2n(d))) return toast('날짜를 고르세요.');
+      add = add.filter((h) => h.date !== d).concat({ date: d, name: n || '공휴일' }); off.delete(d); y = +d.slice(0, 4); draw();
+    };
+  };
+  modal('공휴일 관리', `<p>임시공휴일·선거일처럼 새로 정해진 공휴일을 추가하거나, 기본 공휴일을 빼면 <b>모든 학교</b>에 적용됩니다. 각 학교의 2단계 학사일정에 ‘학사일정에 없는 공휴일’ 안내가 뜨고, 버튼 한 번으로 넣을 수 있습니다.</p><div id="holBox"></div>`, '저장', () => {
+    (async () => {
+      const body = { holidays: add, holidayOff: [...off] };
+      try {
+        if (BE === 'http') applyHolidaySettings(await api('PUT', '/admin/settings', body, adminTokenGet()));
+        else { await withTimeout(DB.doc('settings/app').set({ allowCreate: SETTINGS.allowCreate, ...body, updatedAt: Date.now() })); applyHolidaySettings(body); }
+        toast('공휴일 설정을 저장했습니다. 모든 학교에 적용됩니다.');
+      } catch (e) { toast(dbErrText(e)); }
+    })();
+  });
+  draw();
+}
+async function adminExport() {
+  toast('전체 학교 자료를 모으는 중…');
+  try {
+    let data;
+    if (BE === 'http') data = await api('GET', '/admin/export', null, adminTokenGet());
+    else {
+      const snap = await withTimeout(DB.collection('schools').limit(1000).get());
+      data = { app: 'ClassCount', version: APP_VERSION, exportedAt: new Date().toISOString(), settings: SETTINGS, schools: snap.docs.filter((d) => d.exists).map((d) => { const x = d.data(); return { code: d.id, name: x.name, json: x.json, archives: x.archive || {}, createdAt: x.createdAt, updatedAt: x.updatedAt }; }) };
+    }
+    const d = new Date();
+    await saveFile(`ClassCount_전체학교백업_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`, JSON.stringify(data, null, 1));
+    toast(`${data.schools.length}개 학교 자료를 저장했습니다. (비밀번호 정보는 들어 있지 않습니다)`);
+  } catch (e) { toast(dbErrText(e)); }
+}
+
+/* ================= 수업 확인서 인쇄 ================= */
+function confirmSheetModal(teacherMode) {
+  const st = computeStats(S, '연간');
+  const today = d2n(todayIso());
+  const qi = Math.max(0, S.quarters.findIndex((q) => today >= d2n(q.start) && today <= d2n(q.end)));
+  const depts = st.depts.filter((r) => r.dept.name);
+  if (!depts.length || !S.quarters.length) return toast('프로그램과 분기를 먼저 입력하세요.');
+  const anyFee = !teacherMode && depts.some((r) => r.rate > 0);
+  modal('수업 확인서 인쇄', `<p>분기마다 강사별 수업 날짜와 시수를 한 장으로 정리합니다. 단순 확인용 참고 자료이며 법적 효력은 없습니다.</p>
+    <div class="grid g2">
+      <div class="field"><label>기간</label><select class="in sm" id="csQ">${S.quarters.map((q, i) => `<option value="${i}" ${i === qi ? 'selected' : ''}>${esc(q.name)} (${fmtDate(q.start, false)} ~ ${fmtDate(q.end, false)})</option>`).join('')}<option value="all">연간 (모든 분기)</option></select></div>
+      ${teacherMode ? '' : `<div class="field"><label>프로그램</label><select class="in sm" id="csD"><option value="">전체 프로그램 (한 장씩)</option>${depts.map((r) => `<option value="${r.dept.id}">${esc((groupOf(r.dept.group) || {}).name ? groupOf(r.dept.group).name + ' > ' : '')}${esc(r.dept.name)}${r.dept.teacher ? ' · ' + esc(r.dept.teacher) : ''}</option>`).join('')}</select></div>`}
+    </div>
+    <div class="ro-opts" style="margin-top:8px">
+      ${anyFee ? '<label class="chk"><input type="checkbox" id="csFee" checked> 수업료(차시당 단가 × 시수) 표시</label>' : ''}
+      <label class="chk"><input type="checkbox" id="csZero"> 수업이 없는 프로그램도 인쇄</label>
+    </div>`, '인쇄', (m) => {
+    const qv = m.querySelector('#csQ').value, dv = teacherMode ? '' : m.querySelector('#csD').value;
+    const fee = !!(m.querySelector('#csFee') && m.querySelector('#csFee').checked), zero = m.querySelector('#csZero').checked;
+    printSheets(st, qv, dv, fee, zero);
+  });
+}
+function printSheets(st, qv, deptId, fee, zero) {
+  const days = new Map(st.days.map((d) => [d.iso, d]));
+  const range = qv === 'all' ? { name: '연간', start: S.quarters[0].start, end: S.quarters[S.quarters.length - 1].end } : S.quarters[+qv];
+  const a = d2n(range.start), b = d2n(range.end);
+  const school = (TEACHER && TEACHER.payload && TEACHER.payload.school) || S.info.school || '';
+  const rows = st.depts.filter((r) => r.dept.name && (!deptId || r.dept.id === deptId));
+  const pages = rows.map((r) => {
+    const d = r.dept, mk = new Set((d.makeups || []).map((x) => x.d)), mkNote = new Map((d.makeups || []).map((x) => [x.d, x.note]));
+    const dates = r.dates.filter((iso) => { const n = d2n(iso); return n >= a && n <= b; });
+    if (!dates.length && !zero) return '';
+    const cancels = (d.cancels || []).filter((x) => { const n = d2n(x.d); return n >= a && n <= b; });
+    const n = dates.length, periods = n * r.per, money = periods * r.rate, g = groupOf(d.group);
+    const rowOf = (iso, i) => { const dd = days.get(iso); return `<tr><td class="c">${i + 1}</td><td>${fmtDate(iso)}</td><td class="c">${dd ? dd.wk + '주' : ''}</td><td class="c">${r.per}</td><td>${mk.has(iso) ? '보강' + (mkNote.get(iso) ? ' (' + esc(mkNote.get(iso)) + ')' : '') : ''}</td></tr>`; };
+    const head = '<thead><tr><th style="width:9%">순</th><th>수업일</th><th style="width:13%">주차</th><th style="width:12%">차시</th><th style="width:30%">비고</th></tr></thead>';
+    const two = dates.length > 22, half = Math.ceil(dates.length / 2);   // 수업이 많으면 두 단으로 나눠 한 장에
+    const list = dates.map(rowOf).join('');
+    return `<section class="page">
+      <h1>${esc(S.info.year ? S.info.year + '학년도 ' : '')}방과후학교 강사 수업 확인서</h1>
+      <div class="sub">${esc(range.name)} · ${fmtDate(range.start)} ~ ${fmtDate(range.end)}</div>
+      <table class="info"><tr><th>학교</th><td>${esc(school)}</td><th>분류</th><td>${esc((g && g.name) || '')}</td></tr>
+        <tr><th>프로그램</th><td>${esc(d.name)}</td><th>강사</th><td>${esc(d.teacher || '')}</td></tr>
+        <tr><th>수업 요일</th><td>매주 ${esc(dayStr(d) || '–')}</td><th>회당 차시</th><td>${r.per}차시</td></tr></table>
+      ${two ? `<div class="cols"><table class="list">${head}<tbody>${dates.slice(0, half).map((x, i) => rowOf(x, i)).join('')}</tbody></table><table class="list">${head}<tbody>${dates.slice(half).map((x, i) => rowOf(x, i + half)).join('')}</tbody></table></div>`
+        : `<table class="list">${head}<tbody>${list || '<tr><td colspan="5" class="c">이 기간에 수업이 없습니다.</td></tr>'}</tbody></table>`}
+      <table class="total"><tr><th>합계</th><td><b>${n}회 · ${periods}차시</b></td>${fee && r.rate ? `<th>수업료</th><td>${fmt(r.rate)}원 × ${periods}차시 = <b>${fmt(money)}원</b></td>` : ''}</tr></table>
+      ${cancels.length ? `<div class="note"><b>휴강</b> ${cancels.map((x) => fmtDate(x.d) + (x.note ? ' (' + esc(x.note) + ')' : '')).join(', ')}</div>` : ''}
+      <p class="disclaimer">※ 이 확인서는 학사일정에 따라 계산한 수업 일정과 시수를 단순히 확인하기 위한 참고 자료이며, 법적 효력이 없습니다.</p>
+      <p class="date">출력일: ${new Date().toLocaleDateString('ko-KR')} · ClassCount</p>
+    </section>`;
+  }).filter(Boolean);
+  if (!pages.length) return toast('이 기간에 인쇄할 수업이 없습니다.');
+  const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>수업 확인서</title><style>
+    @page { size: A4; margin: 16mm 14mm; }
+    body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #111; font-size: 11pt; margin: 0; }
+    .page { page-break-after: always; } .page:last-child { page-break-after: auto; }
+    h1 { text-align: center; font-size: 18pt; margin: 0 0 4px; letter-spacing: 1px; } .sub { text-align: center; color: #444; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } th, td { border: 1px solid #555; padding: 5px 7px; font-size: 10pt; }
+    th { background: #f0f0f0; font-weight: 600; } .info th { width: 14%; } .list td.c, .list th { text-align: center; } .c { text-align: center; }
+    .cols { display: flex; gap: 8px; align-items: flex-start; } .cols table { flex: 1; } .cols th, .cols td { padding: 3px 5px; font-size: 9pt; }
+    .total th { width: 12%; background: #e8e8e8; } .note { font-size: 10pt; margin: 4px 0 10px; } .disclaimer { margin: 18px 0 4px; padding: 8px 10px; border: 1px solid #999; background: #f7f7f7; font-size: 9.5pt; } .date { text-align: right; color: #666; font-size: 9pt; margin: 4px 0 0; }
+  </style></head><body>${pages.join('')}</body></html>`;
+  let fr = $('#printFrame'); if (fr) fr.remove();
+  fr = document.createElement('iframe'); fr.id = 'printFrame'; fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(fr);
+  const doc = fr.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('인쇄 창을 열 수 없습니다. 브라우저 설정을 확인하세요.'); } }, 250);
+}
 
 /* ================= 이벤트 ================= */
 const getPath = (p) => p.split('.').reduce((o, k) => (o == null ? o : o[k]), S);
@@ -2203,9 +2502,10 @@ function rerenderKeepFocus() {
 }
 function rerenderSoft() { const sy = window.scrollY; render(); window.scrollTo(0, sy); }
 
-const RO_ACTS = new Set(['asOfToday', 'changelog', 'backCurrentYear', 'shareList', 'adminLogin', 'adminLogout', 'copyTable', 'copyDates', 'exportXlsx', 'backup', 'semAll', 'groupAll', 'backAdmin', 'logout', 'toGate', 'openAdmin']);
+const RO_ACTS = new Set(['printSheet', 'printSheetT', 'saveNow', 'asOfToday', 'changelog', 'backCurrentYear', 'shareList', 'adminLogin', 'adminLogout', 'copyTable', 'copyDates', 'exportXlsx', 'backup', 'semAll', 'groupAll', 'backAdmin', 'logout', 'toGate', 'openAdmin']);
 function onClick(e) {
   if (dragJustEnded) return;
+  if (e.target.closest('#saveChip') && MODE === 'app' && CUR && !RO) { ACTIONS.saveNow(); return; }
   const at = e.target.closest('[data-asort],[data-aview],[data-areset],[data-adel]');
   if (at) {
     const d = at.dataset;
@@ -2383,6 +2683,7 @@ const ACTIONS = {
   groupAll(t) { S.groups.forEach((g) => (g.collapsed = t.dataset.v === '1')); save(); rerenderSoft(); },
   addVac(t) { const s = +t.dataset.sem; S.cal.vacations.push({ id: uid(), sem: s, name: '', start: '', end: '', run: true }); S.ui.semOpen[s] = true; save(); rerenderSoft(); },
   addClosure(t) { const s = +t.dataset.sem; S.cal.closures.push({ id: uid(), sem: s, start: '', end: '', name: '', type: '재량휴업일' }); S.ui.semOpen[s] = true; save(); rerenderSoft(); },
+  holIgnore() { S.cal.holIgnore = [...new Set([...(S.cal.holIgnore || []), ...missingHolidays().map((h) => h.date)])]; save(); rerenderSoft(); toast('이 공휴일들은 앞으로 안내하지 않습니다. 필요하면 ‘공휴일 자동 추가’로 넣을 수 있습니다.'); },
   autoHol() {
     const hs = holidaysInRange(S.cal.start, S.cal.end), have = new Set(S.cal.closures.map((c) => c.start));
     let added = 0, weekend = 0;
@@ -2457,6 +2758,12 @@ const ACTIONS = {
     copyText(`${r.dept.name} (${r.dept.teacher || ''})\n` + S.quarters.map((q, i) => q.name + '\t' + r.dates.filter((iso) => days.get(iso).q === i).map((iso) => fmtDate(iso) + days.get(iso).wk + '주').join(', ')).join('\n'), '날짜 목록을 복사했습니다.');
   },
   exportXlsx() { exportXlsx(); },
+  printSheet() { confirmSheetModal(false); },
+  printSheetT() { confirmSheetModal(true); },
+  backupList() { backupModal(); },
+  holidayAdmin() { holidayAdminModal(); },
+  adminExport() { adminExport(); },
+  saveNow() { if (CONFLICT) conflictModal(0); else if (remoteDirty) flushRemote(); else toast('저장할 변경 사항이 없습니다.'); },
   sample() {
     const go = () => { const nm = S.info.school; normalize(sampleState()); if (CUR) { S._school = CUR; if (nm) S.info.school = nm; } S.exportedAt = 0; save(); render(); toast('예시 자료를 불러왔습니다. 각 단계를 눌러 내용을 확인해 보세요.'); };
     if (hasContent()) confirmBox('예시 자료 불러오기', '현재 입력한 내용이 예시 자료로 바뀝니다. 필요하면 먼저 JSON 파일로 저장하세요.', '불러오기', go); else go();

@@ -99,3 +99,16 @@ test('날짜 목록 해석: 월/일·기간·학년도 넘김', () => {
   const s = E.parseDateList('10/27, 1/5, 11/2~11/4', 2026);
   assert.deepEqual([...s].sort(), ['2026-10-27', '2026-11-02', '2026-11-03', '2026-11-04', '2027-01-05']);
 });
+
+test('공휴일: 2029~2030년 표가 있고, 최고관리자 추가·제외가 반영된다', () => {
+  const h29 = E.holidaysInRange('2029-01-01', '2029-12-31').map((h) => h.date);
+  assert.ok(h29.includes('2029-02-13') && h29.includes('2029-09-24'), '2029 설날·추석 대체공휴일');
+  assert.ok(E.holidaysInRange('2030-01-01', '2030-12-31').some((h) => h.date === '2030-02-05'), '2030 설날 대체공휴일');
+  E.setHolidayOverrides([{ date: '2026-06-01', name: '임시공휴일' }, { date: '2026-05-05', name: '중복' }], ['2026-07-17']);
+  const h26 = E.holidaysInRange('2026-05-01', '2026-07-31');
+  assert.ok(h26.some((h) => h.date === '2026-06-01' && h.name === '임시공휴일' && h.custom), '추가한 공휴일');
+  assert.equal(h26.filter((h) => h.date === '2026-05-05').length, 1, '기본 공휴일과 겹치면 한 번만');
+  assert.ok(!h26.some((h) => h.date === '2026-07-17'), '제외한 공휴일');
+  E.setHolidayOverrides([], []);
+  assert.ok(E.holidaysInRange('2026-07-01', '2026-07-31').some((h) => h.date === '2026-07-17'), '설정을 비우면 원래대로');
+});

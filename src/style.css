@@ -385,3 +385,14 @@ tr.row-on td{background:#f3f8f5 !important}
 .brand-hero{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--acc);margin:-2px 0 8px}
 .app-footer a.linkbtn{text-decoration:underline}
 @media (max-width:560px){.brand-en{display:none}}
+/* v1.12 */
+#saveChip{cursor:pointer}
+.choice-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.choice-list .btn{justify-content:flex-start;height:auto;min-height:38px;padding:8px 14px;white-space:normal;text-align:left}
+.month-chips{display:flex;flex-wrap:wrap;gap:6px}
+.mchip{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-variant-numeric:tabular-nums}
+.mchip.cls{border-color:var(--acc2);color:var(--acc);background:var(--accbg)}
+.mchip.mk{border-color:var(--vac);color:var(--vac);background:var(--vacbg)}
+.mchip.cx{border-color:var(--hol);color:var(--hol);background:var(--holbg);text-decoration:line-through}
+.mchip.past{opacity:.5}
+.mchip.today{box-shadow:0 0 0 2px var(--gold);font-weight:700}

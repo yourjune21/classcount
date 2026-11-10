@@ -67,17 +67,29 @@ const KR_HOLIDAYS = {
   2026: [['01-01', '신정'], ['02-16', '설날'], ['02-17', '설날'], ['02-18', '설날'], ['03-01', '삼일절'], ['03-02', '대체공휴일(삼일절)'], ['05-01', '노동절'], ['05-05', '어린이날'], ['05-24', '부처님오신날'], ['05-25', '대체공휴일(부처님오신날)'], ['06-03', '전국동시지방선거'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['08-17', '대체공휴일(광복절)'], ['09-24', '추석'], ['09-25', '추석'], ['09-26', '추석'], ['10-03', '개천절'], ['10-05', '대체공휴일(개천절)'], ['10-09', '한글날'], ['12-25', '성탄절']],
   2027: [['01-01', '신정'], ['02-06', '설날'], ['02-07', '설날'], ['02-08', '설날'], ['02-09', '대체공휴일(설날)'], ['03-01', '삼일절'], ['05-01', '노동절'], ['05-03', '대체공휴일(노동절)'], ['05-05', '어린이날'], ['05-13', '부처님오신날'], ['06-06', '현충일'], ['07-17', '제헌절'], ['07-19', '대체공휴일(제헌절)'], ['08-15', '광복절'], ['08-16', '대체공휴일(광복절)'], ['09-14', '추석'], ['09-15', '추석'], ['09-16', '추석'], ['10-03', '개천절'], ['10-04', '대체공휴일(개천절)'], ['10-09', '한글날'], ['10-11', '대체공휴일(한글날)'], ['12-25', '성탄절'], ['12-27', '대체공휴일(성탄절)']],
   2028: [['01-01', '신정'], ['01-25', '설날'], ['01-26', '설날'], ['01-27', '설날'], ['03-01', '삼일절'], ['04-12', '국회의원선거'], ['05-01', '노동절'], ['05-02', '부처님오신날'], ['05-05', '어린이날'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['10-02', '추석'], ['10-03', '추석·개천절'], ['10-04', '추석'], ['10-05', '대체공휴일(추석)'], ['10-09', '한글날'], ['12-25', '성탄절']],
+  // 2029~2030년: 음력 환산 기준 예정일 (선거일·임시공휴일은 정해지면 최고관리자 ‘공휴일 관리’에서 추가)
+  2029: [['01-01', '신정'], ['02-12', '설날'], ['02-13', '설날'], ['02-14', '설날'], ['03-01', '삼일절'], ['05-01', '노동절'], ['05-05', '어린이날'], ['05-07', '대체공휴일(어린이날)'], ['05-20', '부처님오신날'], ['05-21', '대체공휴일(부처님오신날)'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['09-21', '추석'], ['09-22', '추석'], ['09-23', '추석'], ['09-24', '대체공휴일(추석)'], ['10-03', '개천절'], ['10-09', '한글날'], ['12-25', '성탄절']],
+  2030: [['01-01', '신정'], ['02-02', '설날'], ['02-03', '설날'], ['02-04', '설날'], ['02-05', '대체공휴일(설날)'], ['03-01', '삼일절'], ['05-01', '노동절'], ['05-05', '어린이날'], ['05-06', '대체공휴일(어린이날)'], ['05-09', '부처님오신날'], ['06-06', '현충일'], ['07-17', '제헌절'], ['08-15', '광복절'], ['09-11', '추석'], ['09-12', '추석'], ['09-13', '추석'], ['10-03', '개천절'], ['10-09', '한글날'], ['12-25', '성탄절']],
 };
+// 최고관리자가 추가·제외한 공휴일 (서버 설정에서 받아 적용)
+const HOL_OVERRIDE = { add: [], off: [] };
+function setHolidayOverrides(add, off) {
+  HOL_OVERRIDE.add = (Array.isArray(add) ? add : []).filter((h) => h && !isNaN(d2n(h.date))).map((h) => ({ date: h.date, name: String(h.name || '공휴일') }));
+  HOL_OVERRIDE.off = (Array.isArray(off) ? off : []).filter((d) => !isNaN(d2n(d)));
+}
+function builtinHolidays(year) { return (KR_HOLIDAYS[year] || []).map(([md, name]) => ({ date: year + '-' + md, name })); }
 
 function holidaysInRange(start, end) {
   const a = d2n(start), b = d2n(end), out = [];
   if (isNaN(a) || isNaN(b)) return out;
+  const off = new Set(HOL_OVERRIDE.off), seen = new Set();
   Object.keys(KR_HOLIDAYS).forEach((y) => {
     KR_HOLIDAYS[y].forEach(([md, name]) => {
       const iso = y + '-' + md, n = d2n(iso);
-      if (n >= a && n <= b) out.push({ date: iso, name });
+      if (n >= a && n <= b && !off.has(iso)) { out.push({ date: iso, name }); seen.add(iso); }
     });
   });
+  HOL_OVERRIDE.add.forEach((h) => { const n = d2n(h.date); if (n >= a && n <= b && !seen.has(h.date)) { out.push({ date: h.date, name: h.name, custom: true }); seen.add(h.date); } });
   return out.sort((x, y) => (x.date < y.date ? -1 : 1));
 }
 
@@ -211,4 +223,4 @@ function computeStats(state, scope) {
   return { days, scopedDays: allDays, months, weekday, wdClosed, depts, teachers: [...tmap.values()] };
 }
 
-if (typeof module !== 'undefined') module.exports = { weekOfMonth, week5On, commonOpen, d2n, n2d, dowOf, parseDateList, holidaysInRange, buildCalendar, deptSessions, computeStats, baseOpen, KR_HOLIDAYS, DOW };
+if (typeof module !== 'undefined') module.exports = { weekOfMonth, week5On, commonOpen, d2n, n2d, dowOf, parseDateList, holidaysInRange, setHolidayOverrides, builtinHolidays, buildCalendar, deptSessions, computeStats, baseOpen, KR_HOLIDAYS, DOW };

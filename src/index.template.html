@@ -18,7 +18,7 @@
     <span id="who"></span>
     <select id="yearSel" class="in sm year-sel" style="display:none" title="학년도 선택"></select>
     <span class="sp"></span>
-    <span class="save-chip" id="saveChip"><i></i>자동 저장</span>
+    <span class="save-chip" id="saveChip" title="누르면 지금 서버에 저장합니다"><i></i>자동 저장</span>
     <span class="unsaved app-only" id="unsaved" style="display:none">JSON 파일로 저장 안 됨<button class="btn" data-act="backup">지금 저장</button></span>
     <button class="btn sm app-only ro-hide" data-act="backup">JSON 저장</button>
     <button class="btn sm owner-only" data-act="openAdmin" style="display:none">전체 학교 관리</button>
@@ -26,6 +26,8 @@
       <div class="menu-pop" id="menuPop">
         <button data-act="backup">JSON 파일로 저장</button>
         <button data-act="restore" class="ro-hide">JSON 파일 불러오기</button>
+        <button data-act="backupList" class="ro-hide">백업 · 복원 (자동 백업)</button>
+        <button data-act="printSheet">수업 확인서 인쇄</button>
         <hr class="ro-hide">
         <button data-act="sample" class="ro-hide">예시 자료 불러오기</button>
         <button data-act="reset" class="ro-hide">입력 내용 모두 지우기</button>
