@@ -1,0 +1,40 @@
+# (선택) GitHub Pages로 ‘서버 없이 이 기기에서만 사용’ 버전을 무료로 공개합니다.
+# 쓰려면: 저장소 Settings → Pages → Source를 “GitHub Actions”로 바꾼 뒤,
+#         Actions 탭 → 이 워크플로 → Run workflow 를 누르세요.
+# Pages를 켜기 전에는 실패 표시가 생기지 않도록 자동 실행을 꺼 두었습니다.
+# 매번 자동으로 다시 배포하려면 아래 on: 에 push: branches: [main] 을 추가하세요.
+# 학교 계정·최고관리자·강사용 링크가 필요하면 Cloudflare Pages로 배포하세요(docs/DEPLOY_CLOUDFLARE.md).
+name: GitHub Pages (기기 전용 버전)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run build
+      - name: 화면 파일만 모으기 (_worker.js 제외)
+        run: mkdir -p _site && cp public/index.html _site/ && touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

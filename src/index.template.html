@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClassCount · 방과후학교 수업시수 계산기</title>
+<meta name="description" content="ClassCount — 학사일정 기반 방과후학교 강사별·분기별 수업시수 계산기">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/*CSS*/
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><div class="logo">C</div><div style="min-width:0"><h1>방과후학교 수업시수 계산기 <span class="brand-en">ClassCount</span></h1><div class="sub" id="subTitle"></div></div></div>
+    <span id="who"></span>
+    <select id="yearSel" class="in sm year-sel" style="display:none" title="학년도 선택"></select>
+    <span class="sp"></span>
+    <span class="save-chip" id="saveChip"><i></i>자동 저장</span>
+    <span class="unsaved app-only" id="unsaved" style="display:none">JSON 파일로 저장 안 됨<button class="btn" data-act="backup">지금 저장</button></span>
+    <button class="btn sm app-only ro-hide" data-act="backup">JSON 저장</button>
+    <button class="btn sm owner-only" data-act="openAdmin" style="display:none">전체 학교 관리</button>
+    <div class="menu app-only"><button class="btn sm" id="menuBtn">메뉴 ▾</button>
+      <div class="menu-pop" id="menuPop">
+        <button data-act="backup">JSON 파일로 저장</button>
+        <button data-act="restore" class="ro-hide">JSON 파일 불러오기</button>
+        <hr class="ro-hide">
+        <button data-act="sample" class="ro-hide">예시 자료 불러오기</button>
+        <button data-act="reset" class="ro-hide">입력 내용 모두 지우기</button>
+        <hr>
+        <button data-act="rollover" class="ro-hide">다음 학년도로 전환</button>
+        <button data-act="changePw" class="srv-only">비밀번호 변경</button>
+        <button data-act="logout">로그아웃 / 첫 화면</button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <nav class="steps" id="steps"></nav>
+  <main id="main"></main>
+  
+</div>
+<footer class="app-footer" id="appFooter"></footer>
+<input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal"></div>
+<script>
+/*ENGINE*/
+</script>
+<script>
+/*UI*/
+</script>
+</body>
+</html>

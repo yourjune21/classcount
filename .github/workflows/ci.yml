@@ -1,0 +1,18 @@
+# 푸시·풀 리퀘스트마다 계산 엔진 테스트와 빌드 결과(public/) 확인
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 테스트 (계산 엔진·버전·빌드 결과)
+        run: npm test

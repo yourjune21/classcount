@@ -1,0 +1,3 @@
+# 로컬 시험용 환경 변수 예시. 이 파일을 .dev.vars 로 복사해 값을 바꾸세요. (.dev.vars 는 커밋하지 않음)
+ADMIN_PASSWORD=change-me-admin-password
+TOKEN_SECRET=change-me-to-a-long-random-string
