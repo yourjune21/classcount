@@ -1,9 +1,8 @@
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.11.2';
+const APP_VERSION = '1.11.1';
 const APP_DATE = '2026-11-10';
 const CHANGELOG = [
-  ['1.11.2', '2026-11-10', 'Cloudflare GitHub 연동 배포 오류(Invalid KV namespace ID) 수정: wrangler.toml 제거, 연결 설정은 대시보드에서'],
   ['1.11.1', '2026-11-10', '영문 이름 ClassCount 적용(제목·로고·하단), GitHub 저장소(yourjune21/classcount) 연결 링크'],
   ['1.11.0', '2026-11-10', '통계 첫 화면에 진행 현황 탭(기준일까지 프로그램별 수업 진행을 가로 막대그래프로, 분기별 진행 상태·남은 수업 한눈에 보기), 다음에 추가할 기능 안내 삭제'],
   ['1.10.0', '2026-11-10', 'GitHub 저장소 구성(소스·빌드·자동 테스트·배포 설정·설명서), 최고관리자 메뉴에 새 학교 생성 켜기/끄기, 서버 없는 배포(GitHub Pages 등) 안내 개선'],

@@ -1,6 +1,6 @@
 {
   "name": "classcount",
-  "version": "1.11.2",
+  "version": "1.11.1",
   "private": true,
   "description": "ClassCount — 학사일정 기반 방과후학교 강사별·분기별 수업시수 계산기 (Cloudflare Pages + KV)",
   "homepage": "https://github.com/yourjune21/classcount#readme",
@@ -13,7 +13,7 @@
     "check": "node scripts/build.mjs --check",
     "test": "node --test",
     "dev": "npm run build && npx wrangler pages dev ./public --kv SCHOOLS",
-    "deploy": "npm run build && npx wrangler pages deploy ./public --project-name classcount"
+    "deploy": "npm run build && npx wrangler pages deploy ./public"
   },
   "license": "MIT"
 }

@@ -11,7 +11,7 @@
 
 - **바로 써 보기**: <https://yourjune21.github.io/classcount/> (GitHub Pages, 기기 전용 버전 — 저장소에서 Pages를 켠 뒤 열림) → ‘예시 학교로 체험하기’
 - **내 학교용으로 가져가기**: [Use this template](https://github.com/yourjune21/classcount/generate) 또는 [Fork](https://github.com/yourjune21/classcount/fork)
-- **현재 버전**: v1.11.2 — [변경 내역](CHANGELOG.md)
+- **현재 버전**: v1.11.1 — [변경 내역](CHANGELOG.md)
 - **라이선스**: [MIT](LICENSE) — 학교·교육청에서 자유롭게 복사·수정·배포할 수 있습니다
 
 ---
@@ -57,7 +57,7 @@
 ### B. GitHub Pages (나 혼자, 또는 한 학교에서 기기별로 쓸 때)
 1. 이 저장소를 Fork합니다.
 2. 저장소 **Settings → Pages → Source**를 **GitHub Actions**로 바꿉니다.
-3. **Actions** 탭 → ‘GitHub Pages (기기 전용 버전)’ → **Run workflow** 를 누르고, 끝나면 `https://<아이디>.github.io/classcount/` 로 접속합니다. (이 저장소: <https://yourjune21.github.io/classcount/>)
+3. **Actions** 탭에서 ‘GitHub Pages (기기 전용 버전)’이 끝나면 `https://<아이디>.github.io/classcount/` 로 접속합니다. (이 저장소: <https://yourjune21.github.io/classcount/>)
 
 입력 내용은 그 기기 브라우저(쿠키·저장소)에만 저장되므로, **JSON 파일로 저장**해 보관·이동하세요.
 
