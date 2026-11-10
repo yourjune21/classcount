@@ -16,6 +16,7 @@ scripts/
 public/                 배포용 결과물 — 빌드 후 함께 커밋 (index.html, _worker.js)
 tests/                  node:test 테스트
 docs/                   설명서와 화면 캡처
+(wrangler.toml 없음)    Pages의 KV·비밀값은 대시보드에서 설정 — 파일을 두면 GitHub 빌드가 대시보드 설정을 무시함
 .github/workflows/      CI(테스트), GitHub Pages 배포(선택)
 ```
 
@@ -26,7 +27,7 @@ docs/                   설명서와 화면 캡처
 | `npm test` | 계산 엔진 테스트 + `public/` 최신 여부 + 버전 일치 확인 |
 | `npm run check` | `public/` 이 소스와 같은지만 확인 |
 | `npm run dev` | 빌드 후 로컬 서버(`wrangler pages dev`, KV 포함) — `.dev.vars.example` 을 `.dev.vars` 로 복사해 두세요 |
-| `npm run deploy` | 빌드 후 Cloudflare에 직접 배포(Wrangler) |
+| `npm run deploy` | 빌드 후 Cloudflare에 직접 배포(Wrangler, 프로젝트 `classcount`) |
 
 Node 18 이상이면 되고, 설치할 패키지는 없습니다(`dev`·`deploy`만 `npx wrangler` 사용).
 

@@ -9,7 +9,7 @@
    - Mac Finder: `Cmd + Shift + .`
 3. 저장소 화면에서 **Add file → Upload files** (빈 저장소라면 ‘uploading an existing file’ 링크)
 4. `classcount` 폴더 **안의 모든 파일과 폴더**를 한꺼번에 끌어다 놓습니다. (`classcount` 폴더 자체가 아니라 그 안의 내용)
-5. 아래 Commit message에 `ClassCount v1.11.1` 을 적고 **Commit changes**
+5. 아래 Commit message에 `ClassCount v1.11.2` 을 적고 **Commit changes**
 6. 저장소 첫 화면에 `README.md`, `src`, `public`, `docs`, `.github` 등이 보이면 성공입니다.
 7. **Actions** 탭에서 ‘CI’가 초록색 ✓ 인지 확인합니다.
 
@@ -21,7 +21,7 @@
 cd classcount
 git init -b main
 git add .
-git commit -m "ClassCount v1.11.1"
+git commit -m "ClassCount v1.11.2"
 git remote add origin https://github.com/yourjune21/classcount.git
 git push -u origin main        # 저장소에 README 등을 먼저 만들었다면: git pull --rebase origin main 후 다시 push
 ```
@@ -29,7 +29,7 @@ git push -u origin main        # 저장소에 README 등을 먼저 만들었다�
 ## 올린 다음 할 일
 | 할 일 | 위치 |
 |---|---|
-| **바로 써 볼 주소 만들기**(GitHub Pages, 기기 전용) | Settings → Pages → Source: **GitHub Actions** → Actions의 ‘GitHub Pages’ 완료 후 <https://yourjune21.github.io/classcount/> |
+| **바로 써 볼 주소 만들기**(GitHub Pages, 기기 전용) | Settings → Pages → Source: **GitHub Actions** → Actions → ‘GitHub Pages’ → **Run workflow** → 완료 후 <https://yourjune21.github.io/classcount/> |
 | **다른 사람이 복사해 쓰게 하기** | Settings → General → **Template repository** 체크 → 다른 사람은 ‘Use this template’ |
 | 저장소 소개 | 첫 화면 오른쪽 About ⚙ → Description: `학사일정 기반 방과후학교 수업시수 계산기`, Website: Pages 주소, Topics: `afterschool`, `education`, `cloudflare-pages` |
 | **학교 계정까지 운영** | [DEPLOY_CLOUDFLARE.md](DEPLOY_CLOUDFLARE.md) — Cloudflare Pages를 이 저장소와 연결(프로젝트 이름 `classcount` → `classcount.pages.dev`) |

@@ -2,14 +2,14 @@
  * ClassCount (방과후학교 수업시수 계산기) — Cloudflare Pages 서버 (_worker.js, Advanced mode)
  *
  * 필요한 설정 (Cloudflare 대시보드 > 프로젝트 > 설정)
- *   - KV 네임스페이스 바인딩: 변수 이름 SCHOOLS
+ *   - KV 네임스페이스 바인딩: 변수 이름 SCHOOL (SCHOOLS로 넣어도 동작)
  *   - 환경 변수(암호화 권장): ADMIN_PASSWORD  … 최고관리자 비밀번호
  *   - 환경 변수(암호화 권장): TOKEN_SECRET    … 임의의 긴 문자열 (로그인 토큰 서명용)
  *
  * /api/* 요청만 처리하고, 나머지는 정적 파일(index.html)을 그대로 돌려줍니다.
  */
 
-const SERVER_VERSION = '1.11.1';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
+const SERVER_VERSION = '1.11.3';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
 const SCHOOL_PREFIX = 'school:';
 const SHARE_PREFIX = 'share:';
 const SHARE_RE = /^[A-Za-z0-9]{6}$/;
@@ -165,7 +165,9 @@ async function schoolAuth(request, env) {
 const schoolToken = (env, s) => signToken(env, { t: 's', c: s.code, pv: s.pv, exp: Date.now() + SCHOOL_TOKEN_DAYS * 86400000 });
 
 async function handleApi(request, env, url) {
-  if (!env.SCHOOLS) return err(500, '서버 설정이 필요합니다: KV 네임스페이스(SCHOOLS)가 연결되지 않았습니다.');
+  // KV 바인딩 변수 이름은 SCHOOL 또는 SCHOOLS 어느 쪽이든 허용
+  if (!env.SCHOOLS && env.SCHOOL) env = Object.create(env, { SCHOOLS: { value: env.SCHOOL } });
+  if (!env.SCHOOLS) return err(500, '서버 설정이 필요합니다: KV 네임스페이스(변수 이름 SCHOOL)가 연결되지 않았습니다.');
   const path = url.pathname.replace(/^\/api/, '').replace(/\/+$/, '') || '/';
   const m = request.method;
 

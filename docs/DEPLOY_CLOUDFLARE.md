@@ -32,7 +32,7 @@
 ## 3. KV와 비밀값 연결
 프로젝트 → **Settings**
 1. **Bindings → Add → KV namespace**
-   - Variable name: **`SCHOOLS`** (반드시 이 이름)
+   - Variable name: **`SCHOOL`** (`SCHOOLS`로 넣어도 동작)
    - KV namespace: 1단계에서 만든 것
 2. **Variables and Secrets → Add** (Type: **Secret**)
    | 이름 | 값 |
@@ -46,8 +46,8 @@
 
 ## 5. 확인
 - `https://<프로젝트이름>.pages.dev/api/health` →
-  `{"ok":true,"admin":true,"version":"1.11.1","allowCreate":true}` 가 보이면 정상
-- 화면 맨 아래 `서버 v1.11.1` 이 화면 버전과 같아야 합니다. 다르면 ⚠ 표시가 붙습니다.
+  `{"ok":true,"admin":true,"version":"1.11.2","allowCreate":true}` 가 보이면 정상
+- 화면 맨 아래 `서버 v1.11.2` 이 화면 버전과 같아야 합니다. 다르면 ⚠ 표시가 붙습니다.
 - 첫 화면 아래 **‘최고관리자 로그인’** → `ADMIN_PASSWORD` 로 들어가 학교 목록을 확인합니다.
 
 ---
@@ -58,16 +58,15 @@
 - 학교 자료는 KV에 있으므로 배포를 다시 해도 그대로 남습니다.
 
 ## 다른 방법: 명령줄(Wrangler)로 배포
+> 저장소에는 `wrangler.toml` 을 두지 않습니다. 이 파일이 있으면 Cloudflare가 GitHub 빌드 때 대시보드 설정 대신 파일을 읽어서, KV 연결을 대시보드에서 바꿀 수 없게 됩니다.
+
 ```bash
 npm install -g wrangler
 wrangler login
-wrangler kv namespace create SCHOOLS            # 출력되는 id를 wrangler.toml에 붙여넣기
-wrangler pages project create classcount
-npm run deploy                                   # = npm run build && wrangler pages deploy ./public
-wrangler pages secret put ADMIN_PASSWORD --project-name classcount
-wrangler pages secret put TOKEN_SECRET  --project-name classcount
-npm run deploy                                   # 비밀값 반영을 위해 한 번 더
+wrangler pages project create classcount          # 처음 한 번
+npm run deploy                                     # = npm run build && wrangler pages deploy ./public --project-name classcount
 ```
+KV 연결(변수 이름 `SCHOOL`)과 `ADMIN_PASSWORD`·`TOKEN_SECRET` 은 대시보드 Settings에서 넣고, 한 번 더 `npm run deploy` 하세요.
 
 ## 다른 방법: 대시보드에 파일 끌어다 놓기
 `public/` 폴더의 `index.html` 과 `_worker.js` 를 zip으로 묶어 **Pages → Upload assets(Drag and drop)** 로 올려도 됩니다. 이후 KV·비밀값 연결과 재배포 순서는 같습니다. 이 방식은 GitHub 자동 배포가 되지 않습니다.
@@ -97,7 +96,8 @@ npm run deploy                                   # 비밀값 반영을 위해 �
 | 증상 | 원인·해결 |
 |---|---|
 | “정적 자산만 있는 Worker에는 바인딩을 추가할 수 없습니다” | Worker로 만들어졌습니다. 2단계처럼 **Pages**로 새로 만드세요 |
-| 첫 화면에 “서버(/api)가 없습니다” | KV 연결 후 재배포를 안 했거나, 변수 이름이 `SCHOOLS`가 아닙니다 |
+| “Invalid KV namespace ID (…). Not a valid hex string” | 저장소에 `wrangler.toml` 이 있습니다. 파일을 지우고(커밋) 다시 배포하세요. v1.11.2부터는 들어 있지 않습니다 |
+| 첫 화면에 “서버(/api)가 없습니다” | KV 연결 후 재배포를 안 했거나, 변수 이름이 `SCHOOL`(또는 `SCHOOLS`)이 아닙니다 |
 | 하단에 `서버 v… ⚠` | 화면과 서버 버전이 다릅니다. 최신 커밋으로 다시 배포하세요 |
 | 최고관리자 로그인이 안 됨 | `ADMIN_PASSWORD` 를 넣고 재배포했는지 확인하세요 |
 | 새 학교 만들기가 흐리게 보임 | 최고관리자가 ‘새 학교 생성’을 꺼 두었습니다 |

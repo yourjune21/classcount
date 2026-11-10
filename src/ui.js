@@ -1,8 +1,10 @@
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.11.1';
+const APP_VERSION = '1.11.3';
 const APP_DATE = '2026-11-10';
 const CHANGELOG = [
+  ['1.11.3', '2026-11-10', 'Cloudflare KV 바인딩 변수 이름을 SCHOOL로 안내(기존 SCHOOLS도 그대로 동작)'],
+  ['1.11.2', '2026-11-10', 'Cloudflare GitHub 연동 배포 오류(Invalid KV namespace ID) 수정: wrangler.toml 제거, 연결 설정은 대시보드에서'],
   ['1.11.1', '2026-11-10', '영문 이름 ClassCount 적용(제목·로고·하단), GitHub 저장소(yourjune21/classcount) 연결 링크'],
   ['1.11.0', '2026-11-10', '통계 첫 화면에 진행 현황 탭(기준일까지 프로그램별 수업 진행을 가로 막대그래프로, 분기별 진행 상태·남은 수업 한눈에 보기), 다음에 추가할 기능 안내 삭제'],
   ['1.10.0', '2026-11-10', 'GitHub 저장소 구성(소스·빌드·자동 테스트·배포 설정·설명서), 최고관리자 메뉴에 새 학교 생성 켜기/끄기, 서버 없는 배포(GitHub Pages 등) 안내 개선'],
@@ -553,7 +555,7 @@ function renderGate() {
     <div class="gate-hero"><h2>방과후학교 수업시수 계산기</h2><div class="brand-hero">ClassCount</div><p>학사일정을 바탕으로 강사별·분기별 수업시수와 수업료를 계산합니다. 학교를 만들거나 학교코드·학교명으로 로그인하세요.</p>
       <button class="btn demo-btn" data-act="demo">▶ 예시 학교로 체험하기 <span class="muted" style="font-weight:400">— 가입 없이, 저장되지 않음</span></button></div>
     ${CONN === 'pending' ? '<div class="alert info">서버에 연결하는 중입니다…</div>' : ''}
-    ${CONN === 'none' ? `<div class="alert warn"><div><b>서버 저장소에 연결할 수 없습니다.</b> ${window.claude ? 'claude.ai에 로그인한 상태에서 열어야 학교 계정을 쓸 수 있습니다.' : '이 주소에는 학교 계정용 서버(/api)가 없습니다(예: GitHub Pages 배포). Cloudflare Pages에 배포했다면 KV 연결(SCHOOLS)과 재배포 여부를 확인하세요.'} 아래 ‘서버 없이 이 기기에서만 사용’이나 ‘예시 학교로 체험하기’로 바로 쓸 수 있습니다.</div></div>` : ''}
+    ${CONN === 'none' ? `<div class="alert warn"><div><b>서버 저장소에 연결할 수 없습니다.</b> ${window.claude ? 'claude.ai에 로그인한 상태에서 열어야 학교 계정을 쓸 수 있습니다.' : '이 주소에는 학교 계정용 서버(/api)가 없습니다(예: GitHub Pages 배포). Cloudflare Pages에 배포했다면 KV 연결(변수 이름 SCHOOL)과 재배포 여부를 확인하세요.'} 아래 ‘서버 없이 이 기기에서만 사용’이나 ‘예시 학교로 체험하기’로 바로 쓸 수 있습니다.</div></div>` : ''}
     <div class="grid g2 gate-cards">
       <form class="card" data-form="login" autocomplete="on">
         <h3>학교 로그인</h3>

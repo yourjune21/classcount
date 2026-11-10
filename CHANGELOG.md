@@ -2,6 +2,15 @@
 
 > 이 파일은 `npm run build` 가 `src/ui.js` 의 `CHANGELOG` 에서 자동으로 만듭니다. 직접 고치지 마세요.
 
+## v1.11.3 — 2026-11-10
+
+- Cloudflare KV 바인딩 변수 이름을 SCHOOL로 안내(기존 SCHOOLS도 그대로 동작)
+
+## v1.11.2 — 2026-11-10
+
+- Cloudflare GitHub 연동 배포 오류(Invalid KV namespace ID) 수정: wrangler.toml 제거
+- 연결 설정은 대시보드에서
+
 ## v1.11.1 — 2026-11-10
 
 - 영문 이름 ClassCount 적용(제목·로고·하단)

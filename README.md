@@ -11,7 +11,7 @@
 
 - **바로 써 보기**: <https://yourjune21.github.io/classcount/> (GitHub Pages, 기기 전용 버전 — 저장소에서 Pages를 켠 뒤 열림) → ‘예시 학교로 체험하기’
 - **내 학교용으로 가져가기**: [Use this template](https://github.com/yourjune21/classcount/generate) 또는 [Fork](https://github.com/yourjune21/classcount/fork)
-- **현재 버전**: v1.11.1 — [변경 내역](CHANGELOG.md)
+- **현재 버전**: v1.11.2 — [변경 내역](CHANGELOG.md)
 - **라이선스**: [MIT](LICENSE) — 학교·교육청에서 자유롭게 복사·수정·배포할 수 있습니다
 
 ---
@@ -49,7 +49,7 @@
 1. 이 저장소를 [Fork](https://github.com/yourjune21/classcount/fork)하거나 [Use this template](https://github.com/yourjune21/classcount/generate)으로 내 GitHub 계정에 가져옵니다.
 2. Cloudflare에서 **KV 저장소**를 만들고, **Pages 프로젝트**를 GitHub 저장소와 연결합니다.
    - 빌드 명령: `npm run build` · 출력 폴더: `public`
-3. 프로젝트 설정에 KV 연결(`SCHOOLS`)과 비밀값(`ADMIN_PASSWORD`, `TOKEN_SECRET`)을 넣고 다시 배포합니다.
+3. 프로젝트 설정에 KV 연결(변수 이름 `SCHOOL`)과 비밀값(`ADMIN_PASSWORD`, `TOKEN_SECRET`)을 넣고 다시 배포합니다.
 4. 프로젝트 이름을 `classcount` 로 하면 주소는 `https://classcount.pages.dev` 가 됩니다(이미 쓰이는 이름이면 다른 이름으로).
 
 화면 위치까지 자세한 순서는 **[docs/DEPLOY_CLOUDFLARE.md](docs/DEPLOY_CLOUDFLARE.md)** 에 있습니다. 이후에는 GitHub에 수정 사항을 올릴 때마다 자동으로 다시 배포됩니다.
@@ -57,7 +57,7 @@
 ### B. GitHub Pages (나 혼자, 또는 한 학교에서 기기별로 쓸 때)
 1. 이 저장소를 Fork합니다.
 2. 저장소 **Settings → Pages → Source**를 **GitHub Actions**로 바꿉니다.
-3. **Actions** 탭에서 ‘GitHub Pages (기기 전용 버전)’이 끝나면 `https://<아이디>.github.io/classcount/` 로 접속합니다. (이 저장소: <https://yourjune21.github.io/classcount/>)
+3. **Actions** 탭 → ‘GitHub Pages (기기 전용 버전)’ → **Run workflow** 를 누르고, 끝나면 `https://<아이디>.github.io/classcount/` 로 접속합니다. (이 저장소: <https://yourjune21.github.io/classcount/>)
 
 입력 내용은 그 기기 브라우저(쿠키·저장소)에만 저장되므로, **JSON 파일로 저장**해 보관·이동하세요.
 
