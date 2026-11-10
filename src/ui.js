@@ -1,8 +1,9 @@
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.12.1';
 const APP_DATE = '2026-11-10';
 const CHANGELOG = [
+  ['1.12.1', '2026-11-10', '휴대폰 화면 개선: 단계 표시(현재 단계 이름만 가로로), 입력 표(방학·휴업일·분기·프로그램·휴강 사유)를 카드 모양으로, 메뉴가 화면 밖으로 나가던 문제, 상단 고정 해제로 화면 넓게, 입력칸 글자 키움(아이폰 자동 확대 방지), 버튼·선택 줄바꿈 정리'],
   ['1.12.0', '2026-11-10', 'Cloudflare 무료 한도에 맞춰 서버 저장 횟수 절감(30초 모아 저장·변경 없으면 건너뜀), 다른 기기에서 동시에 고친 경우 경고, 자동 백업·복원(서버 최근 10개, 이 기기 최근 7일), 최고관리자 공휴일 관리·전체 학교 백업, 2029~2030년 공휴일, 강사 수업 확인서(단순 확인용) 인쇄, 강사 화면에 다음 수업·이번 달 수업, 학교명 변경 안내'],
   ['1.11.3', '2026-11-10', 'Cloudflare KV 바인딩 변수 이름을 SCHOOL로 안내(기존 SCHOOLS도 그대로 동작)'],
   ['1.11.2', '2026-11-10', 'Cloudflare GitHub 연동 배포 오류(Invalid KV namespace ID) 수정: wrangler.toml 제거, 연결 설정은 대시보드에서'],
@@ -832,10 +833,17 @@ function changelogModal() {
     ${CHANGELOG.map(([v, d, t]) => `<tr><td class="num"><b>v${v}</b></td><td class="num muted">${d}</td><td style="white-space:normal">${esc(t)}</td></tr>`).join('')}
     </tbody></table></div>`, '닫기', null, '');
 }
+// 휴대폰 화면: 입력 표를 카드로 바꿔 보여 줄 때 칸 이름(제목)을 붙임
+function labelEditCells() {
+  $$('table.t.edit').forEach((t) => {
+    const hs = $$('thead th', t).map((th) => th.childNodes[0] ? th.childNodes[0].textContent.trim() : '');
+    $$('tbody > tr', t).forEach((tr) => [...tr.children].forEach((td, i) => { if (!td.hasAttribute('colspan') && !td.dataset.label) td.dataset.label = hs[i] || ''; }));
+  });
+}
 function render() {
   renderHeader();
   renderFooter();
-  setTimeout(() => $$('input[type=date]').forEach((i) => { i.min = YEAR_MIN + '-01-01'; i.max = YEAR_MAX + '-12-31'; }), 0);
+  setTimeout(() => { $$('input[type=date]').forEach((i) => { i.min = YEAR_MIN + '-01-01'; i.max = YEAR_MAX + '-12-31'; }); labelEditCells(); }, 0);
   if (MODE !== 'app') {
     $('#subTitle').textContent = MODE === 'admin' ? '최고관리자 · 전체 학교 관리' : MODE === 'teacher' ? '강사용 수업 조회' : '학사일정 기반 강사별·분기별 수업시수 계산';
     $('#steps').innerHTML = ''; $('#steps').style.display = 'none';
@@ -895,7 +903,7 @@ function renderStep2() {
         <span class="tag vac">방학 ${vacs.length}</span><span class="tag hol">휴업일 ${cls.length}건</span>${days.length ? `<span class="tag acc">평일 운영 가능 ${openDays}일</span>` : ''}<span class="sp"></span></div>
       <div class="fold-b">
         <div class="sub-h"><h4>방학</h4><span class="help" style="margin:0">방학 중 방과후를 운영하면 ‘운영’을 켜 두세요.</span><span class="sp"></span><button class="btn sm" data-act="addVac" data-sem="${s}">+ 방학 추가</button></div>
-        <div class="tbl-wrap"><table class="t edit"><thead><tr><th style="width:26%">이름</th><th>시작일</th><th>종료일</th><th class="c">방과후 운영</th><th class="r">평일</th><th></th></tr></thead><tbody>
+        <div class="tbl-wrap"><table class="t edit m-vac"><thead><tr><th style="width:26%">이름</th><th>시작일</th><th>종료일</th><th class="c">방과후 운영</th><th class="r">평일</th><th></th></tr></thead><tbody>
         ${vacs.map(({ v, idx }) => {
           const a = d2n(v.start), b = d2n(v.end);
           const wd = !isNaN(a) && !isNaN(b) ? days.filter((d) => d.n >= a && d.n <= b && d.dow > 0 && d.dow < 6).length : '';
@@ -908,7 +916,7 @@ function renderStep2() {
         }).join('') || '<tr><td colspan="6" class="empty">방학이 없습니다.</td></tr>'}
         </tbody></table></div>
         <div class="sub-h"><h4>휴업일 · 방과후 미운영일</h4><span class="sp"></span><button class="btn sm" data-act="pasteClosures" data-sem="${s}">여러 줄 붙여넣기</button><button class="btn sm" data-act="addClosure" data-sem="${s}">+ 추가</button></div>
-        <div class="tbl-wrap" style="max-height:440px"><table class="t edit"><thead><tr><th>시작일</th><th>종료일 <span class="muted">(기간일 때)</span></th><th style="width:30%">명칭</th><th>구분</th><th></th></tr></thead><tbody>
+        <div class="tbl-wrap" style="max-height:440px"><table class="t edit m-cls"><thead><tr><th>시작일</th><th>종료일 <span class="muted">(기간일 때)</span></th><th style="width:30%">명칭</th><th>구분</th><th></th></tr></thead><tbody>
         ${cls.map(({ h, idx }) => `<tr class="${h.type === '공휴일' ? 'row-hol' : 'row-sch'}">
             <td><input class="in sm" type="date" data-b="cal.closures.${idx}.start" value="${esc(h.start)}"></td>
             <td><input class="in sm" type="date" data-b="cal.closures.${idx}.end" value="${esc(h.end)}"></td>
@@ -958,7 +966,7 @@ function renderStep3() {
     <p class="lead">분기별 운영 시작일과 종료일을 입력하세요. 분기 기간 밖의 날(신청 기간, 학년말 정비 기간 등)은 계산에서 빠집니다.</p>
     ${week5Box(days)}
     <div class="sec-h"><span class="sp"></span><button class="btn sm" data-act="autoQuarters" ${stepDone(2) ? '' : 'disabled'}>기본 4분기 자동 생성</button><button class="btn sm" data-act="addQuarter">+ 분기 추가</button></div>
-    <div class="tbl-wrap"><table class="t edit"><thead><tr><th style="width:18%">분기명</th><th>시작일</th><th>종료일</th><th class="r">월</th><th class="r">화</th><th class="r">수</th><th class="r">목</th><th class="r">금</th><th class="r">운영 가능일</th><th></th></tr></thead><tbody>
+    <div class="tbl-wrap"><table class="t edit m-q"><thead><tr><th style="width:18%">분기명</th><th>시작일</th><th>종료일</th><th class="r">월</th><th class="r">화</th><th class="r">수</th><th class="r">목</th><th class="r">금</th><th class="r">운영 가능일</th><th></th></tr></thead><tbody>
     ${S.quarters.map((q, idx) => {
       const cnt = [0, 0, 0, 0, 0, 0, 0];
       days.forEach((d) => { if (d.q === idx && commonOpen(S, d)) cnt[d.dow]++; });
@@ -1037,7 +1045,7 @@ function renderStep4() {
         <button class="btn sm" data-act="addDept" data-g="${g.id}">+ 프로그램</button>
         <button class="btn sm icon ghost danger" data-delgroup="${g.id}" title="분류 삭제">✕</button>
       </div>
-      <div class="grp-b"><div class="tbl-wrap"><table class="t edit"><thead><tr><th></th><th style="min-width:130px">프로그램명</th><th style="min-width:110px">강사명</th><th>수업 요일</th><th class="r" title="1회 수업의 차시 수">회당 차시</th><th class="r">차시당 수업료 <span class="muted">(선택)</span></th><th class="r">연간 횟수</th><th></th></tr></thead>
+      <div class="grp-b"><div class="tbl-wrap"><table class="t edit m-dept"><thead><tr><th></th><th style="min-width:130px">프로그램명</th><th style="min-width:110px">강사명</th><th>수업 요일</th><th class="r" title="1회 수업의 차시 수">회당 차시</th><th class="r">차시당 수업료 <span class="muted">(선택)</span></th><th class="r">연간 횟수</th><th></th></tr></thead>
       <tbody>${ds.map((d) => deptRow(d, rmap.get(d.id))).join('') || `<tr class="empty-row" data-gempty="${g.id}"><td colspan="8" class="empty">프로그램이 없습니다. ‘+ 프로그램’을 누르거나 다른 분류에서 끌어다 놓으세요.</td></tr>`}</tbody></table></div></div>
     </div>`;
   }).join('');
@@ -1095,7 +1103,7 @@ function renderChanges() {
   }).join('');
   const listTbl = (kind) => {
     const arr = d[kind] || [], isC = kind === 'cancels';
-    return `<div class="tbl-wrap"><table class="t edit"><thead><tr><th>날짜</th><th style="width:55%">사유 <span class="muted">(선택)</span></th><th></th></tr></thead><tbody>
+    return `<div class="tbl-wrap"><table class="t edit m-chg"><thead><tr><th>날짜</th><th style="width:55%">사유 <span class="muted">(선택)</span></th><th></th></tr></thead><tbody>
       ${arr.map((c, j) => { const bad = isC ? !base.has(c.d) : base.has(c.d) || !fin.has(c.d); return `<tr><td class="num">${fmtDate(c.d)} <span class="muted">${(days.find((x) => x.iso === c.d) || {}).wk || '?'}주</span>${bad ? ` <span class="tag warn" title="${isC ? '원래 수업일이 아니라 계산에 영향이 없습니다' : '이미 수업일이거나 분기 밖이라 계산에 영향이 없습니다'}">확인 필요</span>` : ''}</td>
         <td><input class="in sm" data-b="depts.${idx}.${kind}.${j}.note" value="${esc(c.note)}" placeholder="${isC ? '예: 강사 개인 사정, 학교 행사' : '예: 10.2. 휴강분'}"></td>
         <td class="r"><button class="btn sm icon ghost danger" data-delchg="${kind}:${j}" title="삭제">✕</button></td></tr>`; }).join('') || `<tr><td colspan="3" class="empty">${isC ? '휴강일이 없습니다.' : '보강일이 없습니다.'}</td></tr>`}
@@ -1113,9 +1121,9 @@ function renderChanges() {
     <h2>5. 휴강 · 보강</h2>
     <p class="lead">4단계에서 입력한 프로그램이 자동으로 나타납니다. 프로그램을 고른 뒤 달력에서 <b>수업일을 누르면 휴강</b>, <b>빈 날을 누르면 보강</b>으로 지정되고, 다시 누르면 취소됩니다. 사유는 아래 목록에 적을 수 있습니다. 바뀐 내용은 통계와 강사용 화면에 바로 반영됩니다.</p>
     <div class="toolbar"><button class="btn sm icon" data-chgnav="-1" ${pos <= 0 ? 'disabled' : ''} title="이전 프로그램">‹</button>
-      <select class="in sm" style="width:320px" data-b="ui.chgDept">${deptOptions(d.id, false)}</select>
+      <select class="in sm chg-sel" style="width:320px" data-b="ui.chgDept">${deptOptions(d.id, false)}</select>
       <button class="btn sm icon" data-chgnav="1" ${pos >= S.depts.length - 1 ? 'disabled' : ''} title="다음 프로그램">›</button>
-      <span class="help" style="margin:0">매주 ${dayStr(d) || '–'} · 회당 ${Math.max(1, Number(d.periods) || 1)}차시</span></div>
+      <span class="help chg-info" style="margin:0">매주 ${dayStr(d) || '–'} · 회당 ${Math.max(1, Number(d.periods) || 1)}차시</span></div>
     <div class="kpis">
       <div class="kpi"><div class="l">원래 수업 (연간)</div><div class="v num">${base.size}<small>회</small></div></div>
       <div class="kpi"><div class="l">휴강</div><div class="v num" style="color:var(--warn)">−${effCancel}<small>회</small></div></div>
@@ -1295,10 +1303,10 @@ function viewProgress(st, usePeriods) {
       <label class="asof">기준일 <input class="in sm" type="date" data-b="ui.asOf" value="${esc(asOf)}" min="${YEAR_MIN}-01-01" max="${YEAR_MAX}-12-31"></label>
       ${isToday ? '<span class="tag acc">오늘</span>' : '<button class="btn sm" data-act="asOfToday">오늘로</button>'}
       <span class="sp"></span>
-      <span class="help" style="margin:0">막대 길이</span>
-      <div class="seg" data-seg="ui.progScale"><button class="${!volScale ? 'on' : ''}" data-v="pct">진행률</button><button class="${volScale ? 'on' : ''}" data-v="vol">수업량 비교</button></div>
-      <span class="help" style="margin:0">정렬</span>
-      <div class="seg" data-seg="ui.progSort">${[['base', '입력 순서'], ['pct', '진행률'], ['left', '남은 수업'], ['total', '전체 수업']].map(([k, l]) => `<button class="${sortKey === k ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div>
+      <span class="tgroup"><span class="help" style="margin:0">막대 길이</span>
+      <div class="seg" data-seg="ui.progScale"><button class="${!volScale ? 'on' : ''}" data-v="pct">진행률</button><button class="${volScale ? 'on' : ''}" data-v="vol">수업량 비교</button></div></span>
+      <span class="tgroup"><span class="help" style="margin:0">정렬</span>
+      <div class="seg" data-seg="ui.progSort">${[['base', '입력 순서'], ['pct', '진행률'], ['left', '남은 수업'], ['total', '전체 수업']].map(([k, l]) => `<button class="${sortKey === k ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div></span>
     </div>
     <div class="kpis">
       <div class="kpi"><div class="l">전체 진행률 (${esc(scopeName())})</div><div class="v num">${T ? pctTxt(D / T) : '–'}</div><div class="kbar"><i style="width:${T ? (D / T) * 100 : 0}%"></i></div></div>
