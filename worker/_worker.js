@@ -9,7 +9,7 @@
  * /api/* 요청만 처리하고, 나머지는 정적 파일(index.html)을 그대로 돌려줍니다.
  */
 
-const SERVER_VERSION = '1.12.1';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
+const SERVER_VERSION = '1.13.0';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
 const SCHOOL_PREFIX = 'school:';
 const SHARE_PREFIX = 'share:';
 const SHARE_RE = /^[A-Za-z0-9]{6}$/;

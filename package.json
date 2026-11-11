@@ -1,6 +1,6 @@
 {
   "name": "classcount",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "private": true,
   "description": "ClassCount — 학사일정 기반 방과후학교 강사별·분기별 수업시수 계산기 (Cloudflare Pages + KV)",
   "homepage": "https://github.com/yourjune21/classcount#readme",
