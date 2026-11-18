@@ -123,3 +123,27 @@ test('5주차: 프로그램 설정 → 분류 설정 → 전체 설정 순서로
   assert.equal(E.week5On(st, { group: 'zz', week5: 'inherit' }), false, '분류 정보 없으면 전체');
   assert.equal(E.week5On(st, null), false, '공통 운영일은 전체 설정');
 });
+
+test('5주차 보충: 휴업일로 빠진 달만, 빠진 횟수만큼 같은 달 5주차로 채운다', () => {
+  const base = sample2026({ cal: { week5: false } });
+  const yeon = (st) => st.depts.find((r) => r.dept.name === '연극');   // 금요일반, 3/3부터
+  const off = yeon(E.computeStats(base, '연간'));
+  assert.ok(!off.dates.includes('2026-05-29'), '보충 꺼짐: 5/29(5주차 금)는 빠짐');
+  const on = yeon(E.computeStats(sample2026({ cal: { week5: false, week5Fill: true } }), '연간'));
+  // 5월: 5/1 노동절(1주차 금) 휴업 → 5/29(5주차 금)로 1회 보충
+  assert.ok(on.dates.includes('2026-05-29'), '5/1 휴업만큼 5/29 보충');
+  assert.ok([...on.filled5].includes('2026-05-29'));
+  const may = (r) => r.dates.filter((d) => d.startsWith('2026-05')).length;
+  assert.equal(may(on), may(off) + 1, '5월 한 번만 늘어남');
+  // 빠진 날이 없는 달의 5주차는 그대로 제외 (2027-01-29 금, 5주차이지만 1월 1~4주차 금요일에 휴업 없음 → 제외 유지)
+  assert.ok(!on.dates.includes('2027-01-29') || [...on.filled5].includes('2027-01-29'));
+  for (const iso of on.filled5) { const n = E.d2n(iso); assert.ok(E.weekOfMonth(n, 'nth') >= 5, '보충은 5주차 날만'); }
+  // 휴강은 보충하지 않음: 5/8(금) 휴강을 넣어도 5월 보충은 여전히 1회
+  const st3 = sample2026({ cal: { week5: false, week5Fill: true } });
+  st3.depts.find((d) => d.name === '연극').cancels = [{ d: '2026-05-08', note: '' }];
+  const c3 = yeon(E.computeStats(st3, '연간'));
+  assert.equal([...c3.filled5].filter((d) => d.startsWith('2026-05')).length, 1);
+  // 5주차 운영 중이면 보충 개념 없음
+  const all = yeon(E.computeStats(sample2026({ cal: { week5: true, week5Fill: true } }), '연간'));
+  assert.equal(all.filled5.length, 0);
+});

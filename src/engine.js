@@ -147,7 +147,10 @@ function commonOpen(state, day) {
   return baseOpen(day, 'inherit') && !(day.wk >= 5 && !week5On(state, null));
 }
 
-/* 부서별 수업일 계산 (opts.skipped 배열을 주면 5주차로 빠진 날을 담음) */
+/* 부서별 수업일 계산
+   opts.skipped: 5주차라서 빠진 날, opts.filled: 5주차 보충으로 넣은 날을 담음
+   5주차 미운영이어도 cal.week5Fill이 켜져 있으면, 그 달 1~4주차 수업일 중 공휴일·학교 휴업일로 빠진 횟수만큼
+   같은 달 5주차 수업일(앞쪽부터)로 채움 (방학 미운영 기간·휴강은 빠진 횟수에 넣지 않음) */
 function deptSessions(state, days, dept, opts) {
   const w5 = week5On(state, dept);
   const ex = parseDateList(dept.except, state.info.year);
@@ -156,17 +159,23 @@ function deptSessions(state, days, dept, opts) {
   (dept.cancels || []).forEach((c) => c && c.d && ex.add(c.d));
   (dept.makeups || []).forEach((c) => c && c.d && extra.add(c.d));
   const da = d2n(dept.start), db = d2n(dept.end);
-  const out = [];
+  const fill = !w5 && !!state.cal.week5Fill;
+  const out = [], cand = {}, missed = {};
   for (const day of days) {
     if (extra.has(day.iso) && day.q >= 0) { out.push(day); continue; }
     if (!dept.days.includes(day.dow)) continue;
     if (!isNaN(da) && day.n < da) continue;
     if (!isNaN(db) && day.n > db) continue;
+    if (fill && day.wk <= 4 && day.closure && day.q >= 0 && baseOpen({ ...day, closure: null }, dept.vacRun)) missed[day.ym] = (missed[day.ym] || 0) + 1;
     if (ex.has(day.iso)) continue;
     if (!baseOpen(day, dept.vacRun)) continue;
-    if (!w5 && day.wk >= 5) { if (opts && opts.skipped) opts.skipped.push(day); continue; }
+    if (!w5 && day.wk >= 5) { (cand[day.ym] = cand[day.ym] || []).push(day); continue; }
     out.push(day);
   }
+  const used = new Set();
+  if (fill) Object.keys(missed).forEach((ym) => (cand[ym] || []).slice(0, missed[ym]).forEach((d) => { used.add(d.n); out.push(d); if (opts && opts.filled) opts.filled.push(d); }));
+  if (opts && opts.skipped) Object.values(cand).forEach((l) => l.forEach((d) => { if (!used.has(d.n)) opts.skipped.push(d); }));
+  if (used.size) out.sort((x, y) => x.n - y.n);
   return out;
 }
 
@@ -194,8 +203,8 @@ function computeStats(state, scope) {
   });
 
   const depts = state.depts.map((dept) => {
-    const skipped = [];
-    const ss = deptSessions(state, days, dept, { skipped }).filter((d) => inScope(d, scope));
+    const skipped = [], filled = [];
+    const ss = deptSessions(state, days, dept, { skipped, filled }).filter((d) => inScope(d, scope));
     const byWk = [0, 0, 0, 0, 0, 0, 0];
     ss.forEach((d) => byWk[d.wk]++);
     const per = Math.max(0, Number(dept.periods) || 1);
@@ -213,6 +222,7 @@ function computeStats(state, scope) {
       byQ, byQP: byQ.map((c) => c * per), byQFee: byQ.map((c) => c * per * rate),
       byM, byDow, byWk, dates: ss.map((d) => d.iso),
       skipped5: skipped.filter((d) => inScope(d, scope)).length,
+      filled5: filled.filter((d) => inScope(d, scope)).map((d) => d.iso),
     };
   });
 

@@ -1,8 +1,9 @@
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.15.0';
 const APP_DATE = '2026-11-10';
 const CHANGELOG = [
+  ['1.15.0', '2026-11-19', '‘수업이 빠진 달은 5주차로 채우기’: 5주차 미운영이어도 그 달 1~4주차 수업이 공휴일·학교 휴업일로 빠지면 빠진 횟수만큼 같은 달 5주차로 보충 (3단계). 달력·수업일 목록·분기별 통계(‘5주차 보충’ 열)·확인서·강사 화면에 표시. 분기별 표의 ‘휴강·보강’과 ‘5주차 제외’ 열 순서가 어긋나던 문제 수정'],
   ['1.14.0', '2026-11-19', '5주차 수업을 분류(카테고리)별로 운영/미운영 설정 (3단계). 우선순위: 프로그램 개별 설정 → 분류 설정 → 전체 설정. 4단계 분류 머리줄과 주차별 통계에 표시'],
   ['1.13.0', '2026-11-11', '통계 ‘화면 출력’: 지금 보이는 통계 화면을 미리보기(A4 세로·가로, 자동 축소·쪽수 안내)로 띄워 인쇄·PDF·JPG로 저장. 4단계 부서·강사 화면 개선: 목록 보기(한 줄씩 보고 누른 프로그램만 편집, 휴대폰 기본)·모두 편집 전환, 프로그램·강사·요일 찾기, 상세에서 ↑↓ 순서 바꾸기·분류 옮기기, 입력 요약(요일 미선택·이름 없음 안내), 차시·원 단위 표시, 분류별 강사 수, 분류 간 열 정렬'],
   ['1.12.1', '2026-11-10', '휴대폰 화면 개선: 단계 표시(현재 단계 이름만 가로로), 입력 표(방학·휴업일·분기·프로그램·휴강 사유)를 카드 모양으로, 메뉴가 화면 밖으로 나가던 문제, 상단 고정 해제로 화면 넓게, 입력칸 글자 키움(아이폰 자동 확대 방지), 버튼·선택 줄바꿈 정리'],
@@ -997,6 +998,10 @@ function week5Box(days) {
       <label class="w5mode">주차 기준 <select class="in sm" data-b="cal.weekMode"><option value="nth" ${S.cal.weekMode !== 'cal' ? 'selected' : ''}>그 달의 n번째 요일 (29~31일 = 5주차)</option><option value="cal" ${S.cal.weekMode === 'cal' ? 'selected' : ''}>달력 주 (월요일 시작, 1일이 든 주 = 1주차)</option></select></label>
     </div>
     <div class="help" style="margin:6px 0 0">${on ? '5주차에도 수업합니다.' : '5주차 이후 수업일은 자동으로 빠집니다.'} 분기 기간 안의 평일 5주차는 <b>${w5.length}일</b>입니다${ex ? ` (${ex}${w5.length > 6 ? ' …' : ''})` : ''}.</div>
+    ${(() => { const fillOn = !!S.cal.week5Fill, anyOff = !on || S.groups.some((g) => g.week5 === 'no') || S.depts.some((d) => d.week5 === 'no');
+      let n = 0; if (fillOn && anyOff) S.depts.forEach((d) => { const f = []; deptSessions(S, days, d, { filled: f }); n += f.length; });
+      return `<div class="w5fill ${anyOff ? '' : 'dim'}"><label class="chk"><input type="checkbox" data-b="cal.week5Fill" ${fillOn ? 'checked' : ''}> <b>수업이 빠진 달은 5주차로 채우기</b></label>
+        <div class="help" style="margin:2px 0 0 24px">5주차 미운영인 프로그램도, 그 달 1~4주차 수업일이 <b>공휴일·학교 휴업일</b>로 빠졌다면 빠진 횟수만큼 같은 달 5주차 수업일(앞쪽부터)로 채웁니다. 방학 미운영 기간과 강사 사정 휴강은 채우지 않습니다(휴강은 5단계 보강으로).${fillOn && anyOff ? ` <b>지금 보충되는 수업: 모든 프로그램 합계 ${n}회</b>` : ''}${anyOff ? '' : ' <span class="muted">(지금은 5주차를 모두 운영하므로 적용되지 않습니다)</span>'}</div></div>`; })()}
     <div class="w5grp">
       <div class="w5grp-h"><b>분류별 5주차 수업</b><span class="help" style="margin:0">분류마다 따로 정할 수 있습니다. 프로그램 하나만 다르게 하려면 4단계 ▸ 상세에서 바꾸세요.</span></div>
       ${S.groups.map((g, gi) => { const n = S.depts.filter((d) => d.group === g.id).length, own = S.depts.filter((d) => d.group === g.id && d.week5 !== 'inherit').length, gw = g.week5 || 'inherit', eff = gw === 'inherit' ? on : gw === 'yes';
@@ -1383,20 +1388,25 @@ function tblQuarter(st, usePeriods, showFee) {
   if (showFee) cols.push(...qs.map((q) => ({ label: esc(q.name) + ' 수업료', cls: 'r' })), { label: '수업료 합계', cls: 'r' });
   const any5 = st.depts.some((r) => r.skipped5 > 0);
   const anyChg = st.depts.some((r) => (r.dept.cancels || []).length || (r.dept.makeups || []).length);
+  const anyFill = st.depts.some((r) => (r.filled5 || []).length);
   if (anyChg) cols.push({ label: '휴강·보강', cls: 'r' });
   if (any5) cols.push({ label: '5주차 제외', cls: 'r' });
+  if (anyFill) cols.push({ label: '5주차 보충', cls: 'r' });
   const rowFn = (r) => {
     const vals = usePeriods ? r.byQP : r.byQ;
     const row = [T(r.dept.name, `<b>${esc(r.dept.name)}</b>`), T(r.dept.teacher), T(dayStr(r.dept)), { h: r.dept.days.length + '회', v: r.dept.days.length }, ...vals.map((v) => N(v)), { h: `<b>${fmt(usePeriods ? r.periods : r.count)}</b>`, v: usePeriods ? r.periods : r.count }];
     if (showFee) row.push(...r.byQFee.map((v) => N(v, true)), { h: `<b>${r.fee ? fmt(r.fee) : '–'}</b>`, v: r.fee });
-    if (any5) row.push({ h: r.skipped5 ? `<span class="tag warn">${r.skipped5}회</span>` : '<span class="muted">–</span>', v: r.skipped5 });
+    const p5 = { h: r.skipped5 ? `<span class="tag warn">${r.skipped5}회</span>` : '<span class="muted">–</span>', v: r.skipped5 };
+    const f5 = { h: (r.filled5 || []).length ? `<span class="tag acc" title="${esc(r.filled5.map((x) => fmtDate(x)).join(', '))}">+${r.filled5.length}회</span>` : '<span class="muted">–</span>', v: (r.filled5 || []).length };
     if (anyChg) { const c = (r.dept.cancels || []).length, m = (r.dept.makeups || []).length; row.push({ h: c || m ? `${c ? `<span class="tag warn">−${c}</span>` : ''} ${m ? `<span class="tag acc">+${m}</span>` : ''}` : '<span class="muted">–</span>', v: m - c }); }
+    if (any5) row.push(p5);
+    if (anyFill) row.push(f5);
     return row;
   };
   const groups = grouped(st, rowFn, 4);
   const all = st.depts.map(rowFn);
   const foot = ['합계', '', '', '', ...sumCols(all, 4).map((v) => fmt(v))];
-  return sTable('tq', cols, groups, foot) + `<div class="help">단위: ${usePeriods ? '차시 (횟수 × 회당 차시)' : '회'} · 수업료 = 시수 × 차시당 수업료${any5 ? ' · ‘5주차 제외’는 5주차 미운영 설정으로 빠진 횟수입니다.' : ''}</div>`;
+  return sTable('tq', cols, groups, foot) + `<div class="help">단위: ${usePeriods ? '차시 (횟수 × 회당 차시)' : '회'} · 수업료 = 시수 × 차시당 수업료${any5 ? ' · ‘5주차 제외’는 5주차 미운영 설정으로 빠진 횟수입니다.' : ''}${anyFill ? ' · ‘5주차 보충’은 공휴일·학교 휴업일로 빠진 수업을 같은 달 5주차로 채운 횟수입니다(합계에 포함).' : ''}</div>`;
 }
 function tblWeekday(st, usePeriods) {
   const ws = S.depts.some((d) => d.days.includes(6)) ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5];
@@ -1458,7 +1468,8 @@ function deptOptions(selId, withAll) {
 }
 // 달력 그리드. opts.dept: 강조할 프로그램, opts.days: 표시할 날(기본 전체), opts.noSelect: 프로그램 선택 상자 숨김
 function calGrid(st, dept, days) {
-  const sessSet = dept ? new Set(deptSessions(S, st.days, dept).map((d) => d.iso)) : null;
+  const fillArr = [], sessSet = dept ? new Set(deptSessions(S, st.days, dept, { filled: fillArr }).map((d) => d.iso)) : null;
+  const fillSet = new Set(fillArr.map((d) => d.iso));
   const byMonth = {}; days.forEach((d) => (byMonth[d.ym] = byMonth[d.ym] || []).push(d));
   const cells = Object.keys(byMonth).sort().map((ym) => {
     const map = new Map(byMonth[ym].map((d) => [d.n, d]));
@@ -1478,7 +1489,7 @@ function calGrid(st, dept, days) {
         if ((cls === 'c-open' || cls === 'c-vacon') && d.wk >= 5 && !(dept ? week5On(S, dept) : week5On(S, null))) { cls = 'c-wk5'; tip += ' · 5주차 미운영'; }
         tip = d.wk + '주차 · ' + tip;
         if (sessSet) {
-          if (sessSet.has(d.iso)) { cls += ' c-sel'; const mk = (dept.makeups || []).some((c) => c.d === d.iso); if (mk) cls += ' c-mk'; tip += ' · ' + dept.name + (mk ? ' 보강' : ' 수업'); cnt++; }
+          if (sessSet.has(d.iso)) { const fl = fillSet.has(d.iso); if (fl) { cls = 'c-open c-fill'; tip = tip.replace(' · 5주차 미운영', ''); } cls += ' c-sel'; const mk = (dept.makeups || []).some((c) => c.d === d.iso); if (mk) cls += ' c-mk'; tip += ' · ' + dept.name + (mk ? ' 보강' : fl ? ' 5주차 보충 수업' : ' 수업'); cnt++; }
           else if ((dept.cancels || []).some((c) => c.d === d.iso)) { cls = 'c-cancel'; tip += ' · 휴강'; }
           else if (cls === 'c-open' || cls === 'c-vacon') cls = 'c-wkend';
         } else if (cls === 'c-open' || cls === 'c-vacon') cnt++;
@@ -1487,7 +1498,7 @@ function calGrid(st, dept, days) {
     }
     return `<div class="mon"><h4>${+ym.slice(0, 4)}년 ${+ym.slice(5)}월 <small>${sessSet ? esc(dept.name) + ' ' + cnt + '회' : '운영 ' + cnt + '일'}</small></h4><div class="wk">${DOW.map((w) => `<div class="wh">${w}</div>`).join('')}${html.join('')}</div></div>`;
   }).join('');
-  return `<div class="legend"><span><i class="c-open"></i>운영일</span><span><i class="c-vacon"></i>방학 중 운영</span><span><i class="c-vacoff"></i>방학 미운영</span><span><i class="c-hol"></i>공휴일</span><span><i class="c-sch"></i>학교 휴업일</span>${!week5On(S, dept || null) ? '<span><i class="c-wk5"></i>5주차 제외</span>' : ''}<span><i style="background:#fff"></i>주말·분기 밖</span>${dept ? '<span><i style="outline:2px solid var(--gold);outline-offset:-2px;background:var(--accbg)"></i>수업일</span><span><i class="c-cancel"></i>휴강</span>' : ''}</div>
+  return `<div class="legend">${fillSet.size ? '<span><i class="c-open c-fill"></i>5주차 보충</span>' : ''}<span><i class="c-open"></i>운영일</span><span><i class="c-vacon"></i>방학 중 운영</span><span><i class="c-vacoff"></i>방학 미운영</span><span><i class="c-hol"></i>공휴일</span><span><i class="c-sch"></i>학교 휴업일</span>${!week5On(S, dept || null) ? '<span><i class="c-wk5"></i>5주차 제외</span>' : ''}<span><i style="background:#fff"></i>주말·분기 밖</span>${dept ? '<span><i style="outline:2px solid var(--gold);outline-offset:-2px;background:var(--accbg)"></i>수업일</span><span><i class="c-cancel"></i>휴강</span>' : ''}</div>
     <div class="cal-grid">${cells}</div>`;
 }
 function viewCalendar(st) {
@@ -1503,8 +1514,8 @@ function deptSchedule(st, r, view) {
     const shown = st.scopedDays.filter((d) => d.q >= 0 || r.dates.includes(d.iso));
     return calGrid(st, r.dept, shown.length ? st.scopedDays.filter((d) => d.n >= shown[0].n && d.n <= shown[shown.length - 1].n) : st.scopedDays);
   }
-  return `<div class="date-list">${byQ.map(({ q, ds }) => `<div class="m"><b>${esc(q.name)}</b> <span class="tag acc">${ds.length}회 · ${ds.length * r.per}차시</span><div class="ds">${ds.map((d) => `<span class="dchip${d.wk >= 5 ? ' w5' : ''}${(r.dept.makeups || []).some((c) => c.d === d.iso) ? ' mk' : ''}">${fmtDate(d.iso)}<em>${d.wk}주</em>${d.vac ? '<sup>방</sup>' : ''}${(r.dept.makeups || []).some((c) => c.d === d.iso) ? '<sup class="mk">보</sup>' : ''}</span>`).join(' ') || '<span class="muted">없음</span>'}</div></div>`).join('')}</div>
-    <div class="help" style="margin-top:8px">‘n주’는 그 달의 주차, <sup style="color:var(--vac)">방</sup>은 방학 중 수업, <sup style="color:var(--acc)">보</sup>는 보강입니다.${(r.dept.cancels || []).length ? ` 휴강 ${r.dept.cancels.length}일: ${r.dept.cancels.map((c) => fmtDate(c.d)).join(', ')}` : ''}</div>`;
+  return `<div class="date-list">${byQ.map(({ q, ds }) => `<div class="m"><b>${esc(q.name)}</b> <span class="tag acc">${ds.length}회 · ${ds.length * r.per}차시</span><div class="ds">${ds.map((d) => `<span class="dchip${d.wk >= 5 ? ' w5' : ''}${(r.dept.makeups || []).some((c) => c.d === d.iso) ? ' mk' : ''}">${fmtDate(d.iso)}<em>${d.wk}주</em>${d.vac ? '<sup>방</sup>' : ''}${(r.dept.makeups || []).some((c) => c.d === d.iso) ? '<sup class="mk">보</sup>' : ''}${(r.filled5 || []).includes(d.iso) ? '<sup class="fl">충</sup>' : ''}</span>`).join(' ') || '<span class="muted">없음</span>'}</div></div>`).join('')}</div>
+    <div class="help" style="margin-top:8px">‘n주’는 그 달의 주차, <sup style="color:var(--vac)">방</sup>은 방학 중 수업, <sup style="color:var(--acc)">보</sup>는 보강${(r.filled5 || []).length ? ', <sup style="color:#b26a00">충</sup>은 공휴일·휴업일로 빠진 수업을 채운 5주차 보충 수업' : ''}입니다.${(r.dept.cancels || []).length ? ` 휴강 ${r.dept.cancels.length}일: ${r.dept.cancels.map((c) => fmtDate(c.d)).join(', ')}` : ''}</div>`;
 }
 const viewSeg = (path, cur) => `<div class="seg" data-seg="${path}"><button class="${cur !== 'calendar' ? 'on' : ''}" data-v="list">목록</button><button class="${cur === 'calendar' ? 'on' : ''}" data-v="calendar">달력</button></div>`;
 function viewDates(st) {
@@ -1580,13 +1591,13 @@ async function openTeacher(code) {
 function teacherMonth(r, d) {
   const t = todayIso(), ym = t.slice(0, 7), today = d2n(t);
   const mk = new Set((d.makeups || []).map((x) => x.d));
-  const items = r.dates.filter((iso) => iso.startsWith(ym)).map((iso) => ({ iso, kind: mk.has(iso) ? 'mk' : 'cls' }))
+  const items = r.dates.filter((iso) => iso.startsWith(ym)).map((iso) => ({ iso, kind: mk.has(iso) ? 'mk' : (r.filled5 || []).includes(iso) ? 'fl' : 'cls' }))
     .concat((d.cancels || []).filter((x) => x.d.startsWith(ym)).map((x) => ({ iso: x.d, kind: 'cx', note: x.note })))
     .sort((a, b) => (a.iso < b.iso ? -1 : 1));
   if (!items.length) return '';
   const left = items.filter((x) => x.kind !== 'cx' && d2n(x.iso) >= today).length;
   return `<div class="sec"><div class="sec-h"><h3>이번 달 수업 (${Number(ym.slice(5))}월)</h3><span class="hint">남은 수업 ${left}회</span></div>
-    <div class="month-chips">${items.map((x) => { const past = d2n(x.iso) < today, isT = x.iso === t; return `<span class="mchip ${x.kind} ${past ? 'past' : ''} ${isT ? 'today' : ''}" title="${x.kind === 'cx' ? '휴강' + (x.note ? ': ' + esc(x.note) : '') : x.kind === 'mk' ? '보강' : '수업'}">${fmtDate(x.iso)}${x.kind === 'cx' ? ' 휴강' : x.kind === 'mk' ? ' 보강' : ''}${isT ? ' · 오늘' : ''}</span>`; }).join('')}</div></div>`;
+    <div class="month-chips">${items.map((x) => { const past = d2n(x.iso) < today, isT = x.iso === t; return `<span class="mchip ${x.kind} ${past ? 'past' : ''} ${isT ? 'today' : ''}" title="${x.kind === 'cx' ? '휴강' + (x.note ? ': ' + esc(x.note) : '') : x.kind === 'mk' ? '보강' : '수업'}">${fmtDate(x.iso)}${x.kind === 'cx' ? ' 휴강' : x.kind === 'mk' ? ' 보강' : x.kind === 'fl' ? ' 보충' : ''}${isT ? ' · 오늘' : ''}</span>`; }).join('')}</div></div>`;
 }
 function renderTeacher() {
   const T0 = TEACHER || {};
@@ -1758,7 +1769,7 @@ function printSheets(st, qv, deptId, fee, zero) {
     if (!dates.length && !zero) return '';
     const cancels = (d.cancels || []).filter((x) => { const n = d2n(x.d); return n >= a && n <= b; });
     const n = dates.length, periods = n * r.per, money = periods * r.rate, g = groupOf(d.group);
-    const rowOf = (iso, i) => { const dd = days.get(iso); return `<tr><td class="c">${i + 1}</td><td>${fmtDate(iso)}</td><td class="c">${dd ? dd.wk + '주' : ''}</td><td class="c">${r.per}</td><td>${mk.has(iso) ? '보강' + (mkNote.get(iso) ? ' (' + esc(mkNote.get(iso)) + ')' : '') : ''}</td></tr>`; };
+    const rowOf = (iso, i) => { const dd = days.get(iso); return `<tr><td class="c">${i + 1}</td><td>${fmtDate(iso)}</td><td class="c">${dd ? dd.wk + '주' : ''}</td><td class="c">${r.per}</td><td>${mk.has(iso) ? '보강' + (mkNote.get(iso) ? ' (' + esc(mkNote.get(iso)) + ')' : '') : (r.filled5 || []).includes(iso) ? '5주차 보충' : ''}</td></tr>`; };
     const head = '<thead><tr><th style="width:9%">순</th><th>수업일</th><th style="width:13%">주차</th><th style="width:12%">차시</th><th style="width:30%">비고</th></tr></thead>';
     const two = dates.length > 22, half = Math.ceil(dates.length / 2);   // 수업이 많으면 두 단으로 나눠 한 장에
     const list = dates.map(rowOf).join('');
