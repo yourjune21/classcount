@@ -1,8 +1,9 @@
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.14.0';
 const APP_DATE = '2026-11-10';
 const CHANGELOG = [
+  ['1.14.0', '2026-11-19', '5주차 수업을 분류(카테고리)별로 운영/미운영 설정 (3단계). 우선순위: 프로그램 개별 설정 → 분류 설정 → 전체 설정. 4단계 분류 머리줄과 주차별 통계에 표시'],
   ['1.13.0', '2026-11-11', '통계 ‘화면 출력’: 지금 보이는 통계 화면을 미리보기(A4 세로·가로, 자동 축소·쪽수 안내)로 띄워 인쇄·PDF·JPG로 저장. 4단계 부서·강사 화면 개선: 목록 보기(한 줄씩 보고 누른 프로그램만 편집, 휴대폰 기본)·모두 편집 전환, 프로그램·강사·요일 찾기, 상세에서 ↑↓ 순서 바꾸기·분류 옮기기, 입력 요약(요일 미선택·이름 없음 안내), 차시·원 단위 표시, 분류별 강사 수, 분류 간 열 정렬'],
   ['1.12.1', '2026-11-10', '휴대폰 화면 개선: 단계 표시(현재 단계 이름만 가로로), 입력 표(방학·휴업일·분기·프로그램·휴강 사유)를 카드 모양으로, 메뉴가 화면 밖으로 나가던 문제, 상단 고정 해제로 화면 넓게, 입력칸 글자 키움(아이폰 자동 확대 방지), 버튼·선택 줄바꿈 정리'],
   ['1.12.0', '2026-11-10', 'Cloudflare 무료 한도에 맞춰 서버 저장 횟수 절감(30초 모아 저장·변경 없으면 건너뜀), 다른 기기에서 동시에 고친 경우 경고, 자동 백업·복원(서버 최근 10개, 이 기기 최근 7일), 최고관리자 공휴일 관리·전체 학교 백업, 2029~2030년 공휴일, 강사 수업 확인서(단순 확인용) 인쇄, 강사 화면에 다음 수업·이번 달 수업, 학교명 변경 안내'],
@@ -77,7 +78,7 @@ function normalize(s) {
   s.cal.closures = (s.cal.closures || []).map((c) => ({ id: c.id || uid(), sem: c.sem || 1, start: c.start || '', end: c.end || '', name: c.name || '', type: c.type || '기타' }));
   s.quarters = (s.quarters || []).map((q) => ({ id: q.id || uid(), name: q.name || '', start: q.start || '', end: q.end || '' }));
   if (!Array.isArray(s.groups) || !s.groups.length) s.groups = [{ id: uid(), name: '방과후학교', collapsed: false }];
-  s.groups = s.groups.map((g) => ({ id: g.id || uid(), name: g.name || '', collapsed: !!g.collapsed }));
+  s.groups = s.groups.map((g) => ({ id: g.id || uid(), name: g.name || '', collapsed: !!g.collapsed, week5: g.week5 === 'yes' || g.week5 === 'no' ? g.week5 : 'inherit' }));
   const gids = new Set(s.groups.map((g) => g.id));
   s.depts = (s.depts || []).map((d) => ({
     ...newDept(gids.has(d.group) ? d.group : s.groups[s.groups.length - 1].id),
@@ -995,7 +996,14 @@ function week5Box(days) {
       <span class="sp"></span>
       <label class="w5mode">주차 기준 <select class="in sm" data-b="cal.weekMode"><option value="nth" ${S.cal.weekMode !== 'cal' ? 'selected' : ''}>그 달의 n번째 요일 (29~31일 = 5주차)</option><option value="cal" ${S.cal.weekMode === 'cal' ? 'selected' : ''}>달력 주 (월요일 시작, 1일이 든 주 = 1주차)</option></select></label>
     </div>
-    <div class="help" style="margin:6px 0 0">${on ? '5주차에도 수업합니다.' : '5주차 이후 수업일은 모든 프로그램에서 자동으로 빠집니다.'} 분기 기간 안의 평일 5주차는 <b>${w5.length}일</b>입니다${ex ? ` (${ex}${w5.length > 6 ? ' …' : ''})` : ''}. 프로그램마다 다르게 하려면 4단계 ▸ 상세에서 바꾸세요.</div>
+    <div class="help" style="margin:6px 0 0">${on ? '5주차에도 수업합니다.' : '5주차 이후 수업일은 자동으로 빠집니다.'} 분기 기간 안의 평일 5주차는 <b>${w5.length}일</b>입니다${ex ? ` (${ex}${w5.length > 6 ? ' …' : ''})` : ''}.</div>
+    <div class="w5grp">
+      <div class="w5grp-h"><b>분류별 5주차 수업</b><span class="help" style="margin:0">분류마다 따로 정할 수 있습니다. 프로그램 하나만 다르게 하려면 4단계 ▸ 상세에서 바꾸세요.</span></div>
+      ${S.groups.map((g, gi) => { const n = S.depts.filter((d) => d.group === g.id).length, own = S.depts.filter((d) => d.group === g.id && d.week5 !== 'inherit').length, gw = g.week5 || 'inherit', eff = gw === 'inherit' ? on : gw === 'yes';
+        return `<div class="w5grp-row"><span class="w5grp-nm">${esc(g.name || '(이름 없는 분류)')} <span class="muted">프로그램 ${n}개${own ? ` · 개별 설정 ${own}개` : ''}</span></span>
+          <div class="seg" data-seg="groups.${gi}.week5"><button class="${gw === 'inherit' ? 'on' : ''}" data-v="inherit">전체 따름 (${on ? '운영' : '미운영'})</button><button class="${gw === 'yes' ? 'on' : ''}" data-v="yes">운영</button><button class="${gw === 'no' ? 'on' : ''}" data-v="no">미운영</button></div>
+          <span class="tag ${eff ? 'acc' : 'warn'} w5grp-eff">${eff ? '5주차 수업' : '5주차 제외'}</span></div>`; }).join('')}
+    </div>
   </div>`;
 }
 
@@ -1052,7 +1060,7 @@ function deptRow(d, r) {
     <div class="field"><label>운영 시작일 <span class="opt">(분기보다 늦게 시작)</span></label><input class="in sm" type="date" data-b="depts.${idx}.start" value="${esc(d.start)}"></div>
     <div class="field"><label>운영 종료일 <span class="opt">(조기 종료)</span></label><input class="in sm" type="date" data-b="depts.${idx}.end" value="${esc(d.end)}"></div>
     <div class="field"><label>방학 중 운영</label><select class="in sm" data-b="depts.${idx}.vacRun"><option value="inherit" ${d.vacRun === 'inherit' ? 'selected' : ''}>학사일정 설정 따름</option><option value="yes" ${d.vacRun === 'yes' ? 'selected' : ''}>방학에도 운영</option><option value="no" ${d.vacRun === 'no' ? 'selected' : ''}>방학 중 미운영</option></select></div>
-    <div class="field"><label>5주차 수업</label><select class="in sm" data-b="depts.${idx}.week5"><option value="inherit" ${d.week5 === 'inherit' ? 'selected' : ''}>전체 설정 따름 (${S.cal.week5 !== false ? '운영' : '미운영'})</option><option value="yes" ${d.week5 === 'yes' ? 'selected' : ''}>5주차에도 운영</option><option value="no" ${d.week5 === 'no' ? 'selected' : ''}>5주차 미운영</option></select></div>
+    <div class="field"><label>5주차 수업</label><select class="in sm" data-b="depts.${idx}.week5"><option value="inherit" ${d.week5 === 'inherit' ? 'selected' : ''}>${groupWeek5(S, d.group) !== 'inherit' ? '분류 설정' : '전체 설정'} 따름 (${week5On(S, { ...d, week5: 'inherit' }) ? '운영' : '미운영'})</option><option value="yes" ${d.week5 === 'yes' ? 'selected' : ''}>5주차에도 운영</option><option value="no" ${d.week5 === 'no' ? 'selected' : ''}>5주차 미운영</option></select></div>
     </div><div class="grid g3" style="margin-top:10px">
     <div class="field"><label>메모 <span class="opt">(선택)</span></label><input class="in sm" data-b="depts.${idx}.memo" value="${esc(d.memo)}" placeholder="예: 1~2학년"></div>
     <div class="field" style="grid-column:span 2"><label>휴강·보강</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag warn">휴강 ${(d.cancels || []).length}일</span><span class="tag acc">보강 ${(d.makeups || []).length}일</span><button class="btn sm" data-gochg="${d.id}">휴강·보강 관리 →</button></div></div>
@@ -1074,6 +1082,7 @@ function renderStep4() {
         <button class="btn sm icon ghost" data-gfold="${g.id}" title="${g.collapsed ? '펼치기' : '접기'}">${g.collapsed ? '▸' : '▾'}</button>
         <input class="in sm" data-b="groups.${gi}.name" value="${esc(g.name)}" placeholder="분류명 (예: 방과후학교)">
         <span class="meta">프로그램 ${dsAll.length}개${UI_DFIND ? ` 중 ${ds.length}개 찾음` : ''} · 강사 ${tcount}명${st ? ` · 연간 ${fmt(total)}회` : ''}</span>
+        ${(g.week5 || 'inherit') !== 'inherit' ? `<span class="tag ${g.week5 === 'yes' ? 'acc' : 'warn'}" title="3단계에서 바꿀 수 있습니다">5주차 ${g.week5 === 'yes' ? '운영' : '제외'}</span>` : ''}
         <span class="sp"></span>
         <button class="btn sm" data-act="addDept" data-g="${g.id}">+ 프로그램</button>
         <button class="btn sm icon ghost danger" data-delgroup="${g.id}" title="분류 삭제">✕</button>
@@ -1427,7 +1436,7 @@ function tblWeek(st, usePeriods) {
     return [T(q.name, `<b>${esc(q.name)}</b>`), ...v.map((x) => N(x)), { h: `<b>${v.reduce((a, b) => a + b, 0)}</b>`, v: v.reduce((a, b) => a + b, 0) }];
   });
   const modeTxt = S.cal.weekMode === 'cal' ? '달력 주 기준(월요일 시작)' : '그 달의 n번째 요일 기준(1~7일=1주차 … 29~31일=5주차)';
-  return `<div class="sec-h"><h3>프로그램별 주차별 ${usePeriods ? '시수' : '횟수'}</h3><span class="hint">${modeTxt} · 5주차 수업 ${S.cal.week5 !== false ? '운영' : '미운영'}</span></div>${sTable('tk', cols, g, foot)}
+  return `<div class="sec-h"><h3>프로그램별 주차별 ${usePeriods ? '시수' : '횟수'}</h3><span class="hint">${modeTxt} · 5주차 수업 전체 ${S.cal.week5 !== false ? '운영' : '미운영'}${S.groups.filter((g) => (g.week5 || 'inherit') !== 'inherit').map((g) => ` · ${esc(g.name)} ${g.week5 === 'yes' ? '운영' : '미운영'}`).join('')}</span></div>${sTable('tk', cols, g, foot)}
     <div class="sec"><div class="sec-h"><h3>분기별 주차별 평일 운영 가능일</h3><span class="hint">전체 설정 기준</span></div>${sTable('tk2', qCols, [{ rows: qRows }], ['계', ...sumCols(qRows, 1).map((v) => fmt(v))])}</div>`;
 }
 function tblTeacher(st, showFee) {
@@ -1559,11 +1568,11 @@ async function openTeacher(code) {
       if (!d) throw { code: 'http', message: '유효하지 않거나 만료된 링크입니다. 담당 선생님께 새 링크를 요청하세요.' };
       const g = (st.groups || []).find((x) => x.id === d.group) || {};
       const { rate, memo, ...dept } = d;
-      p = { school: snap.data().name, info: st.info || {}, cal: st.cal || {}, quarters: st.quarters || [], group: { id: g.id, name: g.name || '' }, dept };
+      p = { school: snap.data().name, info: st.info || {}, cal: st.cal || {}, quarters: st.quarters || [], group: { id: g.id, name: g.name || '', week5: g.week5 || 'inherit' }, dept };
     } else throw { code: 'http', message: '서버에 연결할 수 없어 조회할 수 없습니다.' };
     TEACHER.payload = p;
     const ui = S.ui || {};
-    normalize({ info: p.info, cal: p.cal, quarters: p.quarters, groups: [{ id: p.group.id || 'g', name: p.group.name }], depts: [{ ...p.dept, group: p.group.id || 'g' }], ui: { tview: ui.tview || 'list', scope: '', unit: 'periods', semOpen: { 1: false, 2: false } } });
+    normalize({ info: p.info, cal: p.cal, quarters: p.quarters, groups: [{ id: p.group.id || 'g', name: p.group.name, week5: p.group.week5 }], depts: [{ ...p.dept, group: p.group.id || 'g' }], ui: { tview: ui.tview || 'list', scope: '', unit: 'periods', semOpen: { 1: false, 2: false } } });
   } catch (e) { TEACHER.err = dbErrText(e); }
   render(); window.scrollTo(0, 0);
 }

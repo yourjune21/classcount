@@ -9,7 +9,7 @@
  * /api/* 요청만 처리하고, 나머지는 정적 파일(index.html)을 그대로 돌려줍니다.
  */
 
-const SERVER_VERSION = '1.13.0';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
+const SERVER_VERSION = '1.14.0';         // 화면(index.html)의 APP_VERSION과 맞춰 올림
 const SCHOOL_PREFIX = 'school:';
 const SHARE_PREFIX = 'share:';
 const SHARE_RE = /^[A-Za-z0-9]{6}$/;
@@ -123,7 +123,7 @@ function teacherPayload(s, code) {
   if (!d) return null;
   const g = (st.groups || []).find((x) => x.id === d.group) || {};
   const { rate, memo, ...dept } = d;                    // 수업료·메모는 강사 화면에 보내지 않음
-  return { school: s.name, info: { school: st.info?.school || s.name, year: st.info?.year, semester: st.info?.semester }, cal: st.cal || {}, quarters: st.quarters || [], group: { id: g.id, name: g.name || '' }, dept };
+  return { school: s.name, info: { school: st.info?.school || s.name, year: st.info?.year, semester: st.info?.semester }, cal: st.cal || {}, quarters: st.quarters || [], group: { id: g.id, name: g.name || '', week5: g.week5 || 'inherit' }, dept };
 }
 
 /* ---- 학교 색인 ---- */

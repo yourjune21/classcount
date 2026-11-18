@@ -568,3 +568,12 @@ body.pv-print .pv-content .month,body.pv-print .pv-content .qcard,body.pv-print 
   .pv-info{flex-basis:100%;order:9}
   .pv-bar .btn{padding:0 10px}
 }
+/* 분류별 5주차 */
+.w5grp{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.w5grp-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:6px}
+.w5grp-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0}
+.w5grp-row + .w5grp-row{border-top:1px solid var(--line)}
+.w5grp-nm{flex:1;min-width:160px;font-weight:600}
+.w5grp-nm .muted{font-weight:400;font-size:12px;margin-left:4px}
+.w5grp-eff{min-width:76px;text-align:center}
+@media (max-width:640px){ .w5grp-nm{flex-basis:100%} }

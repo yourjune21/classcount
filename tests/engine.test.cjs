@@ -112,3 +112,14 @@ test('공휴일: 2029~2030년 표가 있고, 최고관리자 추가·제외가 �
   E.setHolidayOverrides([], []);
   assert.ok(E.holidaysInRange('2026-07-01', '2026-07-31').some((h) => h.date === '2026-07-17'), '설정을 비우면 원래대로');
 });
+
+test('5주차: 프로그램 설정 → 분류 설정 → 전체 설정 순서로 적용된다', () => {
+  const st = { cal: { week5: true }, groups: [{ id: 'a', week5: 'no' }, { id: 'b', week5: 'inherit' }] };
+  assert.equal(E.week5On(st, { group: 'a', week5: 'inherit' }), false, '분류 미운영');
+  assert.equal(E.week5On(st, { group: 'a', week5: 'yes' }), true, '프로그램 개별 설정이 우선');
+  assert.equal(E.week5On(st, { group: 'b', week5: 'inherit' }), true, '분류가 전체 따름');
+  st.cal.week5 = false; st.groups[1].week5 = 'yes';
+  assert.equal(E.week5On(st, { group: 'b', week5: 'inherit' }), true, '전체 미운영이어도 분류 운영');
+  assert.equal(E.week5On(st, { group: 'zz', week5: 'inherit' }), false, '분류 정보 없으면 전체');
+  assert.equal(E.week5On(st, null), false, '공통 운영일은 전체 설정');
+});

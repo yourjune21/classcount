@@ -24,10 +24,18 @@ function weekOfMonth(n, mode) {
   }
   return Math.ceil(dom / 7);
 }
+// 5주차 운영 여부: 프로그램 설정 → 분류(카테고리) 설정 → 전체 설정 순서로 따름
+function groupWeek5(state, gid) {
+  const g = (state.groups || []).find((x) => x.id === gid);
+  return g && (g.week5 === 'yes' || g.week5 === 'no') ? g.week5 : 'inherit';
+}
 function week5On(state, dept) {
   const w = dept ? dept.week5 : 'inherit';
   if (w === 'yes') return true;
   if (w === 'no') return false;
+  const gw = dept ? groupWeek5(state, dept.group) : 'inherit';
+  if (gw === 'yes') return true;
+  if (gw === 'no') return false;
   return state.cal.week5 !== false;
 }
 
@@ -223,4 +231,4 @@ function computeStats(state, scope) {
   return { days, scopedDays: allDays, months, weekday, wdClosed, depts, teachers: [...tmap.values()] };
 }
 
-if (typeof module !== 'undefined') module.exports = { weekOfMonth, week5On, commonOpen, d2n, n2d, dowOf, parseDateList, holidaysInRange, setHolidayOverrides, builtinHolidays, buildCalendar, deptSessions, computeStats, baseOpen, KR_HOLIDAYS, DOW };
+if (typeof module !== 'undefined') module.exports = { weekOfMonth, week5On, groupWeek5, commonOpen, d2n, n2d, dowOf, parseDateList, holidaysInRange, setHolidayOverrides, builtinHolidays, buildCalendar, deptSessions, computeStats, baseOpen, KR_HOLIDAYS, DOW };
