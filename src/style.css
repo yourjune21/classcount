@@ -586,3 +586,4 @@ body.pv-print .pv-content .month,body.pv-print .pv-content .qcard,body.pv-print 
 .mchip.fl{border-color:#e0a33a;color:#9a5b00;background:#fff4df}
 .wk .c-fill,.wk .c-fill.c-sel{background:#ffe6b8 !important;color:#8a4f00 !important;font-weight:700}
 .legend i.c-fill{background:#ffe6b8}
+.app-footer .credit{flex-basis:100%;text-align:center;margin-top:2px;color:var(--ink2)}

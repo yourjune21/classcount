@@ -1,8 +1,9 @@
 /* ===== UI ===== */
 /* ---- 버전 관리: 기능을 바꿀 때마다 APP_VERSION·APP_DATE를 올리고 CHANGELOG 맨 위에 한 줄 추가 ---- */
-const APP_VERSION = '1.15.0';
-const APP_DATE = '2026-11-10';
+const APP_VERSION = '1.15.1';
+const APP_DATE = '2026-11-19';
 const CHANGELOG = [
+  ['1.15.1', '2026-11-19', '화면 맨 아래에 제작자 표기'],
   ['1.15.0', '2026-11-19', '‘수업이 빠진 달은 5주차로 채우기’: 5주차 미운영이어도 그 달 1~4주차 수업이 공휴일·학교 휴업일로 빠지면 빠진 횟수만큼 같은 달 5주차로 보충 (3단계). 달력·수업일 목록·분기별 통계(‘5주차 보충’ 열)·확인서·강사 화면에 표시. 분기별 표의 ‘휴강·보강’과 ‘5주차 제외’ 열 순서가 어긋나던 문제 수정'],
   ['1.14.0', '2026-11-19', '5주차 수업을 분류(카테고리)별로 운영/미운영 설정 (3단계). 우선순위: 프로그램 개별 설정 → 분류 설정 → 전체 설정. 4단계 분류 머리줄과 주차별 통계에 표시'],
   ['1.13.0', '2026-11-11', '통계 ‘화면 출력’: 지금 보이는 통계 화면을 미리보기(A4 세로·가로, 자동 축소·쪽수 안내)로 띄워 인쇄·PDF·JPG로 저장. 4단계 부서·강사 화면 개선: 목록 보기(한 줄씩 보고 누른 프로그램만 편집, 휴대폰 기본)·모두 편집 전환, 프로그램·강사·요일 찾기, 상세에서 ↑↓ 순서 바꾸기·분류 옮기기, 입력 요약(요일 미선택·이름 없음 안내), 차시·원 단위 표시, 분류별 강사 수, 분류 간 열 정렬'],
@@ -828,7 +829,7 @@ function renderFooter() {
   const f = $('#appFooter'); if (!f) return;
   const env = BE === 'http' ? 'Cloudflare' : BE === 'claude' ? 'claude.ai' : OFFLINE || DEMO ? '이 기기' : '';
   const mismatch = BE === 'http' && SERVER_VERSION && SERVER_VERSION !== APP_VERSION;
-  f.innerHTML = `<span><b>ClassCount</b> 방과후학교 수업시수 계산기</span><span class="dot">·</span><span class="num">v${APP_VERSION}</span><span class="dot">·</span><span class="num">${APP_DATE}</span>${env ? `<span class="dot">·</span><span>${env}</span>` : ''}${BE === 'http' && SERVER_VERSION ? `<span class="dot">·</span><span class="num ${mismatch ? 'ver-warn' : ''}" title="${mismatch ? '화면과 서버 버전이 다릅니다. cloudflare-upload.zip을 다시 배포하세요.' : ''}">서버 v${esc(SERVER_VERSION)}${mismatch ? ' ⚠' : ''}</span>` : ''}<span class="dot">·</span><button class="linkbtn" data-act="changelog">변경 내역</button><span class="dot">·</span><a class="linkbtn" href="${GITHUB_URL}" target="_blank" rel="noopener">GitHub</a>`;
+  f.innerHTML = `<span><b>ClassCount</b> 방과후학교 수업시수 계산기</span><span class="dot">·</span><span class="num">v${APP_VERSION}</span><span class="dot">·</span><span class="num">${APP_DATE}</span>${env ? `<span class="dot">·</span><span>${env}</span>` : ''}${BE === 'http' && SERVER_VERSION ? `<span class="dot">·</span><span class="num ${mismatch ? 'ver-warn' : ''}" title="${mismatch ? '화면과 서버 버전이 다릅니다. cloudflare-upload.zip을 다시 배포하세요.' : ''}">서버 v${esc(SERVER_VERSION)}${mismatch ? ' ⚠' : ''}</span>` : ''}<span class="dot">·</span><button class="linkbtn" data-act="changelog">변경 내역</button><span class="dot">·</span><a class="linkbtn" href="${GITHUB_URL}" target="_blank" rel="noopener">GitHub</a><div class="credit">제작자: 대전광역시교육청 1기 늘봄지원실장 yourjune</div>`;
 }
 function changelogModal() {
   modal('변경 내역', `<p>현재 버전 <b>v${APP_VERSION}</b> (${APP_DATE})${BE === 'http' && SERVER_VERSION ? ` · 서버 v${esc(SERVER_VERSION)}` : ''}</p>
